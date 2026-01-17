@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.datasets import load_iris, load_wine
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from src.viz import ProbaVis
+from src.viz import ProbaViz
 
 
 # data processing functions
@@ -85,7 +85,7 @@ all_models = [
 
 # main display space
 st.set_page_config(layout='wide')
-st.header("Multiclass Probability Visualizer - Welcome!")
+st.header("Welcome to ProbaViz")
 # st.info("Here is why this thing is useful.")
 
 # %% side bar controls: data, model, plot aesthetics
@@ -439,7 +439,7 @@ if set_name is not None:
 
     # call `set_data` only when there is change in... data!
     if "p_v" not in st.session_state:
-        st.session_state["p_v"] = ProbaVis(model, data, target, [f1, f2])
+        st.session_state["p_v"] = ProbaViz(model, data, target, [f1, f2])
     elif st.session_state["set_and_features"] != (set_name, f1, f2):
         st.session_state["set_and_features"] = (set_name, f1, f2)
         st.session_state["p_v"].set_data(data, target, [f1, f2])
@@ -453,7 +453,6 @@ if set_name is not None:
         )
     else:
         st.session_state["p_v"].set_model(model.set_params(**hp))
-        st.subheader("Plots!")
         tab_contour, tab_conf, tab_err = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices"]
         )

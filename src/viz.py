@@ -15,7 +15,7 @@ plt.style.use("seaborn-v0_8-ticks")
 
 
 # %% the class
-class ProbaVis():
+class ProbaViz():
     """
     Visualises class probabilities computed by a supervised ML model trained on
     classified samples with two numerical features.
