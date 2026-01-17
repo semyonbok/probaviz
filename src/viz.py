@@ -110,8 +110,9 @@ class ProbaVis():
         -------
         `None`.
         """
-        if is_classifier(new_model):
-            new_model.fit(self.train_data.values, self.train_target)
+        if new_model is not None:
+            if is_classifier(new_model):
+                new_model.fit(self.train_data.values, self.train_target)
         self.model = new_model
 
     def set_data(
@@ -164,7 +165,7 @@ class ProbaVis():
         # define new entries for contour, ensure all data points will be seen
         coord_dict = {}
         for axis, feature in zip(["x", "y"], [0, 1]):
-            offset = train_data.iloc[:, feature].values.ptp()/100
+            offset = np.ptp(train_data.iloc[:, feature].values)/100
             coord_dict[axis] = np.linspace(
                 train_data.iloc[:, feature].min() - offset,
                 train_data.iloc[:, feature].max() + offset,
@@ -287,6 +288,7 @@ class ProbaVis():
 
         if return_fig:
             return fig
+        return
 
     def replot(self, contour_on: bool = True, **params):
         """

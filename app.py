@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.datasets import load_iris, load_wine
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from src.multiclass_proba_contour import ProbaVis
+from src.viz import ProbaVis
 
 
 # data processing functions
