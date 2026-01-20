@@ -9,6 +9,15 @@ from src.viz import ProbaViz
 
 
 # data processing functions
+def _on_dataset_change() -> None:
+    # When dataset changes (incl. to None), reset everything derived from it
+    for k in ["pv", "set_and_features"]:
+        st.session_state.pop(k, None)
+
+    for k in ["f1", "f2"]:
+        st.session_state.pop(k, None)
+
+
 @st.cache_data
 def process_toy(set_name):
     if set_name == "Wine":
@@ -67,7 +76,7 @@ all_models = [
 # main display space
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
-# st.info("Here is why this thing is useful.")
+
 
 # side bar controls: data, model, plot aesthetics
 with st.sidebar:
@@ -86,19 +95,20 @@ with st.sidebar:
 
     if st.checkbox("Toy Data Set", True, disabled=True):
         set_name = st.selectbox(
-            "Select one of the Toy Data Sets", [None, "Wine", "Iris"]
+            "Select one of the Toy Data Sets", [None, "Wine", "Iris"],
+            on_change=_on_dataset_change, key="set_name"
         )
 
-        # once set is chosen, process data and offer to pick feature 1 & 2
+        # once set is chosen, process data and ozffer to pick feature 1 & 2
         if set_name is not None:
             data, target = process_toy(set_name)
             st.write("Pick Features:")
-            f1 = st.selectbox("Pick Feature 1", data.columns)
-            f2 = st.selectbox(
-                "Pick Feature 2", data.columns[data.columns != f1]
+            f1 = st.selectbox(
+                "Pick Feature 1", data.columns, key="f1"
             )
-        else:
-            st.stop()
+            f2 = st.selectbox(
+                "Pick Feature 2", data.columns[data.columns != f1], key="f2"
+            )
 
     st.subheader("Classifier Model")
     model_pick = st.selectbox("Select one of the Classifiers", all_models)
@@ -140,43 +150,46 @@ with st.sidebar:
 # If data is None, don't plot anything
 # If data is not None but model is None, plot blank scatter
 # if data and model are not None, plot contour
-if set_name is not None:
+if set_name is None:
+    model = None
+    st.session_state.pop("pv", None)
+    st.session_state.pop("set_and_features", None)
+    st.stop()
+else:
     if "set_and_features" not in st.session_state:
         st.session_state["set_and_features"] = (set_name, f1, f2)
 
     # call `set_data` only when there is change in... data!
-    if "p_v" not in st.session_state:
-        st.session_state["p_v"] = ProbaViz(model, data, target, [f1, f2])
+    if "pv" not in st.session_state:
+        st.session_state["pv"] = ProbaViz(model, data, target, [f1, f2])
     elif st.session_state["set_and_features"] != (set_name, f1, f2):
         st.session_state["set_and_features"] = (set_name, f1, f2)
-        st.session_state["p_v"].set_data(data, target, [f1, f2])
+        st.session_state["pv"].set_data(data, target, [f1, f2])
 
     if model is None:
         st.subheader("Scatter Plot")
         st.pyplot(
-            st.session_state["p_v"].plot(
+            st.session_state["pv"].plot(
                 contour_on=False, return_fig=True, fig_size=(16, 9)
             )
         )
     else:
-        st.session_state["p_v"].set_model(model.set_params(**hp))
+        st.session_state["pv"].set_model(model.set_params(**hp))
         tab_contour, tab_conf, tab_err = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices"]
         )
         tab_contour.pyplot(
-            st.session_state["p_v"].plot(
+            st.session_state["pv"].plot(
                 contour_on=True, return_fig=True, fig_size=(16, 9)
             )
         )
         tab_conf.pyplot(
-            st.session_state["p_v"].plot_confusion_matrices(
+            st.session_state["pv"].plot_confusion_matrices(
                 return_fig=True, fig_size=(16, 9)
             )
         )
         tab_err.pyplot(
-            st.session_state["p_v"].plot_error_matrices(
+            st.session_state["pv"].plot_error_matrices(
                 return_fig=True, fig_size=(16, 9)
             )
         )
-else:
-    model = None
