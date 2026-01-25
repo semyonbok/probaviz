@@ -161,29 +161,30 @@ with st.sidebar:
 # If data is not None but model is None, plot blank scatter
 # if data and model are not None, plot contour
 if set_name is None:
-    model = None
     st.session_state.pop("pv", None)
     st.session_state.pop("set_and_features", None)
     st.stop()
-else:
-    if "set_and_features" not in st.session_state:
-        st.session_state["set_and_features"] = (set_name, f1, f2)
 
-    # call `set_data` only when there is change in... data!
-    if "pv" not in st.session_state:
-        st.session_state["pv"] = ProbaViz(model, data, target, [f1, f2])
-    elif st.session_state["set_and_features"] != (set_name, f1, f2):
-        st.session_state["set_and_features"] = (set_name, f1, f2)
-        st.session_state["pv"].set_data(data, target, [f1, f2])
+if "set_and_features" not in st.session_state:
+    st.session_state["set_and_features"] = (set_name, f1, f2)
 
-    if model is None:
-        st.pyplot(
-            st.session_state["pv"].plot(
-                contour_on=False, return_fig=True, fig_size=(16, 9)
-            )
+# call `set_data` only when there is change in... data!
+if "pv" not in st.session_state:
+    st.session_state["pv"] = ProbaViz(model, data, target, [f1, f2])
+elif st.session_state["set_and_features"] != (set_name, f1, f2):
+    st.session_state["set_and_features"] = (set_name, f1, f2)
+    st.session_state["pv"].set_data(data, target, [f1, f2])
+
+if model is None:
+    st.pyplot(
+        st.session_state["pv"].plot(
+            contour_on=False, return_fig=True, fig_size=(16, 9)
         )
-    else:
+    )
+else:
+    try:
         st.session_state["pv"].set_model(model.set_params(**hp))
+
         tab_contour, tab_conf, tab_err = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices"]
         )
@@ -202,8 +203,8 @@ else:
                 return_fig=True, fig_size=(16, 9)
             )
         )
-        info = (
-            st
-            .expander("Model Info", icon="ℹ️")
-            .info(parse_model_desc(model))
-        )
+        with st.expander("Model Info", icon="ℹ️"):
+            st.info(parse_model_desc(model))
+    except ValueError as e:
+        st.error(f"❌ **Model failed to fit.** {e}")
+        st.stop()
