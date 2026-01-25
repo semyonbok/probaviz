@@ -1,14 +1,16 @@
 import re
 import streamlit as st
+
+from sklearn.datasets import load_iris, load_wine
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.datasets import load_iris, load_wine
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+
 from src.viz import ProbaViz
 
 
-# data processing functions
+# streamlit helpers
 def _on_dataset_change() -> None:
     # When dataset changes (incl. to None), reset everything derived from it
     for k in ["pv", "set_and_features"]:
@@ -18,6 +20,7 @@ def _on_dataset_change() -> None:
         st.session_state.pop(k, None)
 
 
+# data processing functions
 @st.cache_data
 def process_toy(set_name):
     if set_name == "Wine":
@@ -61,10 +64,19 @@ def parse_param_desc(model):
     return params_desc
 
 
-def parse_model_desc(model):
-    desc = model.__doc__.split("Parameters")[0]
-    desc = "\n".join(desc.split("\n\n"))
-    return desc
+def parse_model_desc(model) -> str:
+    """
+    Return a compact markdown description of an sklearn estimator:
+    - constructor-style repr (shows non-default params)
+    - short docstring description (before 'Parameters')
+    """
+    doc = model.__doc__ or ""
+    desc = doc.split("Parameters", 1)[0].strip()
+
+    # Collapse excessive whitespace but keep paragraphs
+    desc = "\n\n".join(p.strip() for p in desc.split("\n\n") if p.strip())
+
+    return f"```python\n{repr(model)}\n``` \n\n{desc}"
 
 
 # routine to pick a default sklearn model
@@ -77,25 +89,24 @@ all_models = [
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
 
-
 # side bar controls: data, model, plot aesthetics
 with st.sidebar:
-    # data (only toy data sets for now)
+    # data (only toy datasets for now)
     st.subheader(
-        "Data Set",
+        "Dataset",
         help=(
-            "Pick a data set and two of its numerical features (columns) "
+            "Pick a dataset and two of its numerical features (columns) "
             "that will be used for model training. Currently, only two "
-            "'toy' data sets are available: wine and iris "
+            "'toy' datasets are available: wine and iris "
             "(https://scikit-learn.org/stable/datasets/toy_dataset.html)."
         )
     )
-    if st.checkbox("Synthetic Data Set", False, disabled=True):
+    if st.checkbox("Synthetic Dataset", False, disabled=True):
         pass
 
-    if st.checkbox("Toy Data Set", True, disabled=True):
+    if st.checkbox("Toy Dataset", True, disabled=True):
         set_name = st.selectbox(
-            "Select one of the Toy Data Sets", [None, "Wine", "Iris"],
+            "Select a Toy Dataset", [None, "Wine", "Iris"],
             on_change=_on_dataset_change, key="set_name"
         )
 
@@ -104,21 +115,20 @@ with st.sidebar:
             data, target = process_toy(set_name)
             st.write("Pick Features:")
             f1 = st.selectbox(
-                "Pick Feature 1", data.columns, key="f1"
+                "X-axis", data.columns, key="f1"
             )
             f2 = st.selectbox(
-                "Pick Feature 2", data.columns[data.columns != f1], key="f2"
+                "Y-axis", data.columns[data.columns != f1], key="f2"
             )
 
-    st.subheader("Classifier Model")
-    model_pick = st.selectbox("Select one of the Classifiers", all_models)
+    st.subheader("Classifier")
+    model_pick = st.selectbox("Select a Model", all_models)
     model = fetch_model(model_pick)
 
     # set `random_state` if the model has this parameter
     if (model is not None) and (set_name is not None):
         hp = {}
         hp_desc = parse_param_desc(model)
-        st.expander("Model Info", icon="ℹ️").info(parse_model_desc(model))
         if "random_state" in model.get_params().keys():
             hp["random_state"] = st.number_input(
                 "Input Random State", 0, 500, 1, 1,
@@ -167,7 +177,6 @@ else:
         st.session_state["pv"].set_data(data, target, [f1, f2])
 
     if model is None:
-        st.subheader("Scatter Plot")
         st.pyplot(
             st.session_state["pv"].plot(
                 contour_on=False, return_fig=True, fig_size=(16, 9)
@@ -192,4 +201,9 @@ else:
             st.session_state["pv"].plot_error_matrices(
                 return_fig=True, fig_size=(16, 9)
             )
+        )
+        info = (
+            st
+            .expander("Model Info", icon="ℹ️")
+            .info(parse_model_desc(model))
         )

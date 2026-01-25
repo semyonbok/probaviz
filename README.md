@@ -64,7 +64,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
 - [ ] Dedicated help / info toggles for all data visualization tabs
-- [ ] Move model params out of contour plot title
+- [X] Move model params out of contour plot title
 - [ ] Standardize widget generation patterns
 - [ ] Allow for optional selection of `random_state`
 

@@ -17,7 +17,7 @@ plt.style.use("seaborn-v0_8-ticks")
 # %% the class
 class ProbaViz():
     """
-    Visualises class probabilities computed by a supervised ML model trained on
+    Visualizes class probabilities computed by a supervised ML model trained on
     classified samples with two numerical features.
     Supports more than two classes.
 
@@ -71,7 +71,7 @@ class ProbaViz():
             train_target: Sequence,
             features: Sequence[str | int],
             grid_res: Tuple[int, int] = (100, 100)
-            ):
+    ):
         self._define_utilities()
         self.set_data(train_data, train_target, features, grid_res)
         self.set_model(model)
@@ -82,16 +82,16 @@ class ProbaViz():
             "a2": "two features must be specified for visualization",
             "a3": "two integers must be used to specify grid resolution",
             "a4": "feature {} is not numeric"
-            }
+        }
 
         self._cmap_colors = [
             "Blues", "Oranges", "Greens", "Reds", "Purples", "Greys"
-            ]
+        ]
 
         self._m_colors = [
             "tab:blue", "tab:orange", "tab:green",
             "tab:red", "tab:purple", "tab:grey"
-            ]
+        ]
 
         self._m_styles = ["o", "s", "P", "v", "D", "X"]
 
@@ -121,7 +121,7 @@ class ProbaViz():
             train_target: Sequence,
             features: Sequence[str | int],
             grid_res: Tuple[int, int] = (100, 100)
-            ):
+    ):
         """
         Sets data attributes related to the training dataset.
 
@@ -149,7 +149,7 @@ class ProbaViz():
         assert len(features) == 2, self._asserts["a2"]
         assert len(grid_res) == 2 and all(
             [isinstance(res, int) for res in grid_res]
-            ), self._asserts["a3"]
+        ), self._asserts["a3"]
 
         try:
             train_data = train_data.iloc[:, features]
@@ -158,22 +158,22 @@ class ProbaViz():
 
         for feature in train_data.columns:
             assert (
-                pd.api.types.is_numeric_dtype(train_data[feature]) and
-                not pd.api.types.is_bool_dtype(train_data[feature])
+                pd.api.types.is_numeric_dtype(train_data[feature])
+                and not pd.api.types.is_bool_dtype(train_data[feature])
             ), self._asserts["a4"].format(feature)
 
         # define new entries for contour, ensure all data points will be seen
         coord_dict = {}
         for axis, feature in zip(["x", "y"], [0, 1]):
-            offset = np.ptp(train_data.iloc[:, feature].values)/100
+            offset = np.ptp(train_data.iloc[:, feature].values) / 100
             coord_dict[axis] = np.linspace(
                 train_data.iloc[:, feature].min() - offset,
                 train_data.iloc[:, feature].max() + offset,
                 grid_res[feature]
-                )
+            )
         coord_dict["x"], coord_dict["y"] = np.meshgrid(
             coord_dict["x"], coord_dict["y"]
-            )
+        )
 
         # set data attributes
         self._coord_dict = coord_dict
@@ -181,7 +181,7 @@ class ProbaViz():
             coord_dict["x"].reshape(coord_dict["x"].size, 1),
             coord_dict["y"].reshape(coord_dict["y"].size, 1),
             axis=1
-            )
+        )
         self.train_data = train_data
         self.features = train_data.columns.values
         self.train_target = train_target
@@ -190,7 +190,7 @@ class ProbaViz():
     def plot(
             self, contour_on: bool = True, return_fig: bool = False,
             fig_size: Tuple[int, int] = (12, 6)
-            ) -> Optional[plt.Figure]:
+    ) -> Optional[plt.Figure]:
         """
         Draws scatter plot displaying the training data discriminated by class
         and contour plots with the height values corresponding to class
@@ -231,25 +231,21 @@ class ProbaViz():
             pred_class = self.model.predict(self._mesh_entries)
             train_score = self.model.score(
                 self.train_data.values, self.train_target
-                )
+            )
 
             axes.set_facecolor("k")  # for better decision boundary display
-            axes.set_title(
-                f"Class Probabilities predicted by {repr(self.model)}",
-                fontsize=self.FS
-                )
             axes.text(
-                1.04, 0.05, f"Train\nScore:\n{100*train_score:.2f}%",
+                1.04, 0.05, f"Train\nScore:\n{100 * train_score:.2f}%",
                 verticalalignment="center", horizontalalignment="left",
                 transform=axes.transAxes, fontsize=self.FS,
-                )
+            )
 
         # iteratively plot contours and data points for every class
         for index, class_ in enumerate(self.classes):
             if contour_on:
                 class_proba = np.where(
                     (pred_class == class_), pred_proba[:, index], np.nan
-                    )
+                )
                 current_cmap = next(cmap_cycle)
 
                 if ~np.isnan(class_proba).all():  # skip contour if no class
@@ -259,7 +255,7 @@ class ProbaViz():
                         class_proba.reshape(self._coord_dict["x"].shape),
                         cmap=current_cmap, alpha=1, vmin=0, vmax=1,
                         levels=np.arange(0., 1.05, 0.05)
-                        )
+                    )
 
                     # isolines
                     if cs0.get_cmap().name == "Greys":
@@ -268,7 +264,7 @@ class ProbaViz():
                         current_icolor = "k"
                     cs1 = axes.contour(
                         cs0, levels=cs0.levels[::-4], colors=current_icolor
-                        )
+                    )
                     axes.clabel(cs1, cs1.levels, inline=True,)
 
             # data points and legend
@@ -277,18 +273,18 @@ class ProbaViz():
                 data=full_data.loc[full_data.class_ == class_],
                 c=next(m_color_cycle), marker=next(m_style_cycle),
                 edgecolor="k", zorder=2, label=class_
-                )
+            )
 
         axes.legend(
             loc="center left", bbox_to_anchor=(1.04, .5), title="Class",
             borderaxespad=0, borderpad=0, handletextpad=1., handlelength=0.,
             alignment="left", fontsize=self.FS, title_fontsize=self.FS,
-            )
+        )
         axes.tick_params(axis='both', which='major', labelsize=self.FS)
 
         if return_fig:
             return fig
-        return
+        return None
 
     def replot(self, contour_on: bool = True, **params):
         """
@@ -314,7 +310,7 @@ class ProbaViz():
 
     def plot_confusion_matrices(
             self, return_fig: bool = False, fig_size: Tuple[int, int] = (12, 6)
-            ):
+    ):
         """
         Plots two confusion matrices: one showing raw counts and the other
         showing row-normalized values (i.e., normalized by true class).
@@ -361,7 +357,7 @@ class ProbaViz():
 
     def plot_error_matrices(
             self, return_fig: bool = False, fig_size: Tuple[int, int] = (12, 6)
-            ):
+    ):
         """
         Plots two error matrices: one normalized by predicted values (columns)
         and another normalized by true class (rows). These matrices highlight
