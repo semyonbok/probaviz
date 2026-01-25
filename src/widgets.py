@@ -1,24 +1,36 @@
-from typing import Any
+from __future__ import annotations
 
+from typing import Any, Callable, Optional, TypeVar
 import streamlit as st
+T = TypeVar("T")
 
 
 def none_or_widget(
-        name, *wargs, widget=st.slider, checkbox_kwargs=None, **wkwargs
-):
-    """"""
-    default_checkbox_kwargs = dict(help=(
-        "Default parameter value is `None`. "
-        "Select the checkbox to set another value."
-    ))
+    name: str,
+    *wargs: Any,
+    widget: Callable[..., T] = st.slider,
+    checkbox_kwargs: Optional[dict[str, Any]] = None,
+    **wkwargs: Any,
+) -> Optional[T]:
+    """
+    If user ticks a checkbox, show a widget and return its value;
+    otherwise return `None`.
+    """
+    default_checkbox_kwargs: dict[str, Any] = dict(
+        help=(
+            "Default parameter value is `None`. "
+            "Select the checkbox to set another value."
+        )
+    )
+
     if checkbox_kwargs is None:
         checkbox_kwargs = default_checkbox_kwargs
     elif isinstance(checkbox_kwargs, dict):
         checkbox_kwargs = {**default_checkbox_kwargs, **checkbox_kwargs}
 
-    name = " ".join(name.split("_"))
-    if st.checkbox("Set " + name, **checkbox_kwargs):
-        return widget(name.capitalize(), *wargs, **wkwargs)
+    name = " ".join(name.split("_")).capitalize()
+    if st.checkbox(f"Set {name}", **checkbox_kwargs):
+        return widget(name, *wargs, **wkwargs)
     return None
 
 

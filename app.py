@@ -8,6 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from src.viz import ProbaViz
+from src.widgets import none_or_widget
 
 
 # streamlit helpers
@@ -130,8 +131,9 @@ with st.sidebar:
         hp = {}
         hp_desc = parse_param_desc(model)
         if "random_state" in model.get_params().keys():
-            hp["random_state"] = st.number_input(
-                "Input Random State", 0, 500, 1, 1,
+            hp["random_state"] = none_or_widget(
+                "Random State", 0, 999999, 1, 1,
+                widget=st.number_input,
                 help=hp_desc["random_state"]
             )
 
