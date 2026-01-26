@@ -37,66 +37,91 @@ def none_or_widget(
 def lr_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
 
+    penalty_options = ["l1", "l2", "elasticnet", None]
+    penalty_default = "l2"
     hp["penalty"] = st.selectbox(
-        "Penalty", ["l2", "l1", "elasticnet", None],
-        help=hp_desc["penalty"]
+        "Penalty",
+        penalty_options,
+        index=penalty_options.index(penalty_default),
+        help=hp_desc["penalty"],
     )
-    hp["l1_ratio"] = none_or_widget(
-        "L1 Ratio", 0.0, 1.0, 0.5, 0.01,
-        widget=st.number_input,
-        checkbox_kwargs=dict(
-            disabled=hp["penalty"] == "elasticnet",
-            value=hp["penalty"] == "elasticnet",
-        ),
+    # Conservative bounds: estimator does not define explicit limits for C.
+    hp["C"] = st.number_input(
+        "Inverse of Regularization Strength (C)",
+        min_value=0.01,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["C"],
+    )
+    hp["l1_ratio"] = st.number_input(
+        "L1 Ratio",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.05,
         help=hp_desc["l1_ratio"],
-    )
-    hp["tol"] = st.number_input(
-        "Tolerance",
-        min_value=1e-6, value=1e-4, step=1e-6,
-        format="%.2e"
-    )
-    hp["C"] = st.slider(
-        "Inverse of Regularization Strength (C)", 0.01, 10., 1., 0.01,
-        help=hp_desc["C"]
-    )
-    hp["fit_intercept"] = st.checkbox(
-        "Fit Intercept", value=True,
-        help=hp_desc["fit_intercept"]
-    )
-    hp["intercept_scaling"] = st.number_input(
-        "Intercept Scaling", 0.1, 10.0, 1.0, 0.1,
-        help=hp_desc["intercept_scaling"],
-    )
-    hp["class_weight"] = st.selectbox(
-        "Class Weight", [None, "balanced"],
-        help=hp_desc["class_weight"]
-    )
-    solver_options = [
-        "lbfgs", "liblinear", "newton-cg", "newton-cholesky",
-        "sag", "saga"
-    ]
-    if hp["penalty"] == 'l1':
-        solver_options = ['liblinear', 'saga']
-    elif hp["penalty"] == 'elasticnet':
-        solver_options = ['saga']
-    elif hp["penalty"] is None:
-        solver_options = ['lbfgs', 'newton-cg', 'sag', 'saga']
-    hp["solver"] = st.selectbox(
-        "Solver", solver_options,
-        help=hp_desc["solver"],
-    )
-    disable_dual = not (
-        (hp["penalty"] == "l2") and (hp["solver"] == "liblinear")
     )
     hp["dual"] = st.checkbox(
         "Dual Formulation",
-        value=False if disable_dual else True,
+        value=False,
         help=hp_desc["dual"],
-        disabled=disable_dual
     )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+    )
+    hp["fit_intercept"] = st.checkbox(
+        "Fit Intercept",
+        value=True,
+        help=hp_desc["fit_intercept"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for intercept_scaling.
+    hp["intercept_scaling"] = st.number_input(
+        "Intercept Scaling",
+        min_value=0.1,
+        max_value=10.0,
+        value=1.0,
+        step=0.1,
+        help=hp_desc["intercept_scaling"],
+    )
+    class_weight_options = [None, "balanced"]
+    class_weight_default = None
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        class_weight_options,
+        index=class_weight_options.index(class_weight_default),
+        help=hp_desc["class_weight"],
+    )
+    solver_options = [
+        "lbfgs",
+        "liblinear",
+        "newton-cg",
+        "newton-cholesky",
+        "sag",
+        "saga",
+    ]
+    solver_default = "lbfgs"
+    hp["solver"] = st.selectbox(
+        "Solver",
+        solver_options,
+        index=solver_options.index(solver_default),
+        help=hp_desc["solver"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
     hp["max_iter"] = st.slider(
-        "Max Iterations", 1, 500, 100, 1,
-        help=hp_desc["max_iter"]
+        "Max Iterations",
+        min_value=10,
+        max_value=1000,
+        value=100,
+        step=10,
+        help=hp_desc["max_iter"],
     )
     return hp
 

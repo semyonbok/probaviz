@@ -58,6 +58,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [ ] Add all relevant scikit-learn classifiers
 - [ ] Add ensemble models
+- [ ] Add feature pre-processing
 
 ### 🧩 UI / UX Improvements
 - [ ] Use plotly for backend
@@ -66,7 +67,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Dedicated help / info toggles for all data visualization tabs
 - [X] Move model params out of contour plot title
 - [ ] Standardize widget generation patterns (model registry?)
-- [ ] Allow for optional selection of `random_state`
+- [X] Allow for optional selection of `random_state`
+- [ ] Add deprecated badge against affected hyper-parameters
 
 ### 🧠 GenAI Component
 - [ ] LLM component reacting to user's most recent change (explain what changed / why)
