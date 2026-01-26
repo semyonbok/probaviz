@@ -104,31 +104,46 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
 def knc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     hp["n_neighbors"] = st.slider(
-        "N Neighbors", 1, 100, 5,
-        help=hp_desc["n_neighbors"]
+        "N Neighbors",
+        min_value=1,
+        max_value=100,
+        value=5,
+        help=hp_desc["n_neighbors"],
     )
     hp["weights"] = st.selectbox(
-        "Weights", ["uniform", "distance"],
-        help=hp_desc["weights"]
+        "Weights",
+        ["uniform", "distance"],
+        index=0,
+        help=hp_desc["weights"],
     )
     hp["algorithm"] = st.selectbox(
-        "Algorithm", ["auto", "ball_tree", "kd_tree", "brute"],
-        help=hp_desc["algorithm"]
+        "Algorithm",
+        ["auto", "ball_tree", "kd_tree", "brute"],
+        index=0,
+        help=hp_desc["algorithm"],
     )
     hp["leaf_size"] = st.slider(
-        "Leaf Size", 1, 100, 30,
-        help=hp_desc["leaf_size"]
+        "Leaf Size",
+        min_value=1,
+        max_value=100,
+        value=30,
+        help=hp_desc["leaf_size"],
     )
     hp["p"] = st.slider(
-        "Power", 1, 100, 2,
-        help=hp_desc["p"]
+        "Power",
+        min_value=1,
+        max_value=100,
+        value=2,
+        help=hp_desc["p"],
     )
     hp["metric"] = st.selectbox(
-        "Metric", [
+        "Metric",
+        [
             "minkowski", "cityblock", "cosine", "euclidean",
-            "haversine", "l1", "l2", "manhattan", "nan_euclidean"
+            "haversine", "l1", "l2", "manhattan", "nan_euclidean",
         ],
-        help=hp_desc["metric"]
+        index=0,
+        help=hp_desc["metric"],
     )
     return hp
 
@@ -136,49 +151,78 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
 def dtc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     hp["criterion"] = st.selectbox(
-        "Criterion", ["gini", "entropy", "log_loss"],
-        help=hp_desc["criterion"]
+        "Criterion",
+        ["gini", "entropy", "log_loss"],
+        index=0,
+        help=hp_desc["criterion"],
     )
     hp["splitter"] = st.selectbox(
-        "Splitter", ["best", "random"],
-        help=hp_desc["splitter"]
+        "Splitter",
+        ["best", "random"],
+        index=0,
+        help=hp_desc["splitter"],
     )
     hp["max_depth"] = none_or_widget(
-        "max_depth", 1, 20, 5,
-        help=hp_desc["max_depth"]
+        "max_depth",
+        min_value=1,
+        max_value=20,
+        value=5,
+        help=hp_desc["max_depth"],
     )
     hp["min_samples_split"] = st.slider(
-        "Min Samples Split", 2, 20, 2,
-        help=hp_desc["min_samples_split"]
+        "Min Samples Split",
+        min_value=2,
+        max_value=20,
+        value=2,
+        help=hp_desc["min_samples_split"],
     )
     hp["min_samples_leaf"] = st.slider(
-        "Min Samples Leaf", 1, 20, 1,
-        help=hp_desc["min_samples_leaf"]
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=20,
+        value=1,
+        help=hp_desc["min_samples_leaf"],
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
-        "Min Weight Fraction Leaf", 0.0, 0.5, 0.0, 0.01,
+        "Min Weight Fraction Leaf",
+        min_value=0.0,
+        max_value=0.5,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
     )
     hp["max_features"] = st.selectbox(
-        "Max Features", [None, "sqrt", "log2"],
-        help=hp_desc["max_features"]
+        "Max Features",
+        [None, "sqrt", "log2"],
+        index=0,
+        help=hp_desc["max_features"],
     )
     hp["max_leaf_nodes"] = none_or_widget(
-        "max_leaf_nodes", 2, 100,
-        help=hp_desc["max_leaf_nodes"]
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=100,
+        value=10,
+        help=hp_desc["max_leaf_nodes"],
     )
     hp["min_impurity_decrease"] = st.number_input(
-        "Min Impurity Decrease", 0.0, 1.0, 0.0, 0.01,
+        "Min Impurity Decrease",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_impurity_decrease"],
     )
     hp["class_weight"] = st.selectbox(
         "Class Weight",
         [None, "balanced"],
+        index=0,
         help=hp_desc["class_weight"],
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
-        min_value=0.0, value=0.0, step=0.01,
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
         help=hp_desc["ccp_alpha"],
     )
     return hp
