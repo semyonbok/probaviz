@@ -57,7 +57,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Reset model button
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [ ] Add all relevant scikit-learn classifiers
-- [ ] Add ensemble models
+- [ ] Add meta ensemble models (voting, stacking, etc.)
 - [ ] Add feature pre-processing
 
 ### 🧩 UI / UX Improvements
@@ -66,7 +66,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Add emojis/icons to model selection widget
 - [ ] Dedicated help / info toggles for all data visualization tabs
 - [X] Move model params out of contour plot title
-- [ ] Standardize widget generation patterns (model registry?)
+- [X] Standardize widget generation patterns (model registry?)
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
 

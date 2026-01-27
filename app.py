@@ -2,22 +2,16 @@ import re
 import streamlit as st
 
 from sklearn.datasets import load_iris, load_wine
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
 
 from src.viz import ProbaViz
 from src.widgets import none_or_widget
+from src.models import MODELS
 
 
 # streamlit helpers
 def _on_dataset_change() -> None:
     # When dataset changes (incl. to None), reset everything derived from it
-    for k in ["pv", "set_and_features"]:
-        st.session_state.pop(k, None)
-
-    for k in ["f1", "f2"]:
+    for k in ["pv", "set_and_features", "f1", "f2"]:
         st.session_state.pop(k, None)
 
 
@@ -36,20 +30,6 @@ def process_toy(set_name):
     }
     data_set["target"] = data_set["target"].map(target_names_map)
     return data_set["data"], data_set["target"]
-
-
-def fetch_model(model_pick):
-    """Needed to avoid terminal error caused by model selection checkbox"""
-    if model_pick == "Logistic Regression":
-        return LogisticRegression()
-    if model_pick == "K Nearest Neighbors":
-        return KNeighborsClassifier()
-    if model_pick == "Decision Tree":
-        return DecisionTreeClassifier()
-    if model_pick == "Random Forest":
-        return RandomForestClassifier()
-    if model_pick == "Gradient Boosting":
-        return GradientBoostingClassifier()
 
 
 def parse_param_desc(model):
@@ -80,12 +60,6 @@ def parse_model_desc(model) -> str:
     return f"```python\n{repr(model)}\n``` \n\n{desc}"
 
 
-# routine to pick a default sklearn model
-all_models = [
-    None, "Logistic Regression", "K Nearest Neighbors", "Decision Tree",
-    "Random Forest", "Gradient Boosting"
-]
-
 # main display space
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
@@ -111,7 +85,7 @@ with st.sidebar:
             on_change=_on_dataset_change, key="set_name"
         )
 
-        # once set is chosen, process data and ozffer to pick feature 1 & 2
+        # once set is chosen, process data and allow to pick features
         if set_name is not None:
             data, target = process_toy(set_name)
             st.write("Pick Features:")
@@ -123,8 +97,8 @@ with st.sidebar:
             )
 
     st.subheader("Classifier")
-    model_pick = st.selectbox("Select a Model", all_models)
-    model = fetch_model(model_pick)
+    model_pick = st.selectbox("Select a Model", [None, *MODELS.keys()])
+    model = MODELS[model_pick].factory() if model_pick else None
 
     # set `random_state` if the model has this parameter
     if (model is not None) and (set_name is not None):
@@ -136,27 +110,8 @@ with st.sidebar:
                 widget=st.number_input,
                 help=hp_desc["random_state"]
             )
-
-        if isinstance(model, LogisticRegression):
-            from src.widgets import lr_widgets
-            hp = {**hp, **lr_widgets(hp_desc)}
-
-        if isinstance(model, KNeighborsClassifier):
-            from src.widgets import knc_widgets
-            hp = {**hp, **knc_widgets(hp_desc)}
-
-        if isinstance(model, DecisionTreeClassifier):
-            from src.widgets import dtc_widgets
-            hp = {**hp, **dtc_widgets(hp_desc)}
-
-        if isinstance(model, RandomForestClassifier):
-            from src.widgets import rfc_widgets
-            hp = {**hp, **rfc_widgets(hp_desc)}
-
-        if isinstance(model, GradientBoostingClassifier):
-            from src.widgets import gbc_widgets
-            hp = {**hp, **gbc_widgets(hp_desc)}
-
+        # model_pick cannot be None under this condition
+        hp = {**hp, **MODELS[model_pick].widgets(hp_desc=hp_desc)}  # type: ignore
 
 # Session State and Plotting Logic
 # If data is None, don't plot anything
