@@ -253,157 +253,237 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
-def rfc_widgets(data, hp_desc: dict[str, str]) -> dict:
+def rfc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for n_estimators.
     hp["n_estimators"] = st.slider(
-        "Number of Estimators", 1, 500, 100,
-        help=hp_desc["n_estimators"]
+        "Number of Estimators",
+        min_value=1,
+        max_value=500,
+        value=100,
+        help=hp_desc["n_estimators"],
     )
+    criterion_options = ["gini", "entropy", "log_loss"]
     hp["criterion"] = st.selectbox(
-        "Criterion", ["gini", "entropy", "log_loss"],
-        help=hp_desc["criterion"]
+        "Criterion",
+        criterion_options,
+        index=criterion_options.index("gini"),
+        help=hp_desc["criterion"],
     )
+    # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = none_or_widget(
-        "max_depth", 1, 20, 5,
-        help=hp_desc["max_depth"]
+        "max_depth",
+        min_value=1,
+        max_value=20,
+        value=5,
+        help=hp_desc["max_depth"],
     )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
-        "Min Samples Split", 2, 20, 2,
-        help=hp_desc["min_samples_split"]
+        "Min Samples Split",
+        min_value=2,
+        max_value=20,
+        value=2,
+        help=hp_desc["min_samples_split"],
     )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
-        "Min Samples Leaf", 1, 20, 1,
-        help=hp_desc["min_samples_leaf"]
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=20,
+        value=1,
+        help=hp_desc["min_samples_leaf"],
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
-        "Min Weight Fraction Leaf", 0.0, 0.5, 0.0, 0.01,
+        "Min Weight Fraction Leaf",
+        min_value=0.0,
+        max_value=0.5,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
     )
+    max_features_options = [None, "sqrt", "log2"]
     hp["max_features"] = st.selectbox(
-        "Max Features", ["sqrt", "log2", None],
-        help=hp_desc["max_features"]
+        "Max Features",
+        max_features_options,
+        index=max_features_options.index("sqrt"),
+        help=hp_desc["max_features"],
     )
+    # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
-        "max_leaf_nodes", 2, 100,
-        help=hp_desc["max_leaf_nodes"]
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=100,
+        value=10,
+        help=hp_desc["max_leaf_nodes"],
     )
     hp["min_impurity_decrease"] = st.number_input(
-        "Min Impurity Decrease", 0.0, 1.0, 0.0, 0.01,
+        "Min Impurity Decrease",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_impurity_decrease"],
     )
     hp["bootstrap"] = st.checkbox(
-        "Bootstrap", True,
-        help=hp_desc["bootstrap"]
+        "Bootstrap",
+        value=True,
+        help=hp_desc["bootstrap"],
     )
-    disable_oob_score = not hp["bootstrap"]
-    if disable_oob_score:
-        st.session_state.oob_score_checkbox = False
-        st.session_state.max_samples_checkbox = False
     hp["oob_score"] = st.checkbox(
-        "OOB score",
+        "OOB Score",
         value=False,
         help=hp_desc["oob_score"],
-        disabled=disable_oob_score,
-        key="oob_score_checkbox",
     )
+    class_weight_options = [None, "balanced", "balanced_subsample"]
     hp["class_weight"] = st.selectbox(
         "Class Weight",
-        [None, "balanced", "balanced_subsample"],
+        class_weight_options,
+        index=class_weight_options.index(None),
         help=hp_desc["class_weight"],
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
-        min_value=0.0, value=0.0, step=0.01,
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
         help=hp_desc["ccp_alpha"],
     )
+    # Conservative bounds: max_samples allows int sample counts or (0, 1] fractions.
     hp["max_samples"] = none_or_widget(
-        "max_samples", 1, data.shape[0], 5,
-        checkbox_kwargs=dict(
-            disabled=disable_oob_score,
-            value=False,
-            key="max_samples_checkbox"
-        ),
-        help=hp_desc["max_samples"]
+        "max_samples",
+        widget=st.number_input,
+        min_value=0.1,
+        max_value=1.0,
+        value=1.0,
+        step=0.05,
+        help=hp_desc["max_samples"],
     )
     return hp
 
 
-def gbc_widgets(target, hp_desc: dict[str, str]) -> dict:
+def gbc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
-    if target.nunique() == 2:
-        hp["loss"] = st.selectbox(
-            "loss", ["log_loss", "exponential"],
-            help=hp_desc["loss"]
-        )
-    else:
-        hp["loss"] = st.selectbox(
-            "loss", ["log_loss"],
-            help=hp_desc["loss"]
-        )
-    hp["learning_rate"] = st.number_input(
-        "Learning Rate", 0.0, 1.0, 0.1, 0.01,
-        help=hp_desc["learning_rate"]
+    loss_options = ["log_loss", "exponential"]
+    hp["loss"] = st.selectbox(
+        "Loss",
+        loss_options,
+        index=loss_options.index("log_loss"),
+        help=hp_desc["loss"],
     )
+    hp["learning_rate"] = st.number_input(
+        "Learning Rate",
+        min_value=0.0,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["learning_rate"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for n_estimators.
     hp["n_estimators"] = st.slider(
-        "Number of Estimators", 1, 500, 100,
-        help=hp_desc["n_estimators"]
+        "Number of Estimators",
+        min_value=1,
+        max_value=500,
+        value=100,
+        help=hp_desc["n_estimators"],
     )
     hp["subsample"] = st.number_input(
-        "Subsample", 0.01, 1.0, 1.0, 0.01,
-        help=hp_desc["subsample"]
+        "Subsample",
+        min_value=0.01,
+        max_value=1.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["subsample"],
     )
+    criterion_options = ["friedman_mse", "squared_error"]
     hp["criterion"] = st.selectbox(
-        "Criterion", ["friedman_mse", "squared_error"],
+        "Criterion",
+        criterion_options,
+        index=criterion_options.index("friedman_mse"),
         help=hp_desc["criterion"],
     )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
-        "Min Samples Split", 2, 500, 2,
-        help=hp_desc["min_samples_split"]
+        "Min Samples Split",
+        min_value=2,
+        max_value=200,
+        value=2,
+        help=hp_desc["min_samples_split"],
     )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
-        "Min Samples Leaf", 1, 500, 1,
-        help=hp_desc["min_samples_leaf"]
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=200,
+        value=1,
+        help=hp_desc["min_samples_leaf"],
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
-        "Min Weight Fraction Leaf", 0.0, 0.5, 0.0, 0.01,
+        "Min Weight Fraction Leaf",
+        min_value=0.0,
+        max_value=0.5,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
     )
+    # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = st.slider(
-        "Max Depth", 1, 500, 3,
-        help=hp_desc["max_depth"]
+        "Max Depth",
+        min_value=1,
+        max_value=20,
+        value=3,
+        help=hp_desc["max_depth"],
     )
     hp["min_impurity_decrease"] = st.number_input(
-        "Min Impurity Decrease", 0.0, 1.0, 0.0, 0.01,
+        "Min Impurity Decrease",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
         help=hp_desc["min_impurity_decrease"],
     )
-    hp["init"] = none_or_widget(
-        "Init", ["zero"],
-        widget=st.selectbox,
-        help=hp_desc["init"]
-    )
-    hp["max_features"] = none_or_widget(
-        "max_features", ["sqrt", "log2"],
-        widget=st.selectbox,
+    max_features_options = [None, "sqrt", "log2"]
+    hp["max_features"] = st.selectbox(
+        "Max Features",
+        max_features_options,
+        index=max_features_options.index(None),
         help=hp_desc["max_features"],
     )
+    # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
-        "max_leaf_nodes", 2, 500, 10, 1,
-        help=hp_desc["max_leaf_nodes"]
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=200,
+        value=10,
+        help=hp_desc["max_leaf_nodes"],
     )
     hp["validation_fraction"] = st.number_input(
-        "Validation Fraction", 0.01, 0.99, 0.1, 0.01,
+        "Validation Fraction",
+        min_value=0.01,
+        max_value=0.99,
+        value=0.1,
+        step=0.01,
         help=hp_desc["validation_fraction"],
     )
+    # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
     hp["n_iter_no_change"] = none_or_widget(
-        "n_iter_no_change", 1, 500, 10, 1,
-        help=hp_desc["n_iter_no_change"]
+        "n_iter_no_change",
+        min_value=1,
+        max_value=200,
+        value=10,
+        help=hp_desc["n_iter_no_change"],
     )
     hp["tol"] = st.number_input(
-        "Tol", 0.0, 1.0, 1e-4, 1e-4,
-        help=hp_desc["tol"]
+        "Tolerance",
+        min_value=0.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
     )
     hp["ccp_alpha"] = st.number_input(
-        "CCP Alpha", 0.0, 1.0, 0.0, 0.01,
-        help=hp_desc["ccp_alpha"]
+        "CCP Alpha",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["ccp_alpha"],
     )
     return hp

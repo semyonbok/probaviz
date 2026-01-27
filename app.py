@@ -151,11 +151,11 @@ with st.sidebar:
 
         if isinstance(model, RandomForestClassifier):
             from src.widgets import rfc_widgets
-            hp = {**hp, **rfc_widgets(data, hp_desc)}
+            hp = {**hp, **rfc_widgets(hp_desc)}
 
         if isinstance(model, GradientBoostingClassifier):
             from src.widgets import gbc_widgets
-            hp = {**hp, **gbc_widgets(target, hp_desc)}
+            hp = {**hp, **gbc_widgets(hp_desc)}
 
 
 # Session State and Plotting Logic
