@@ -487,3 +487,149 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         help=hp_desc["ccp_alpha"],
     )
     return hp
+
+
+def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Limit loss options to enable predict_proba
+    loss_options = [
+        # "hinge",
+        "log_loss",
+        "modified_huber",
+        # "squared_hinge",
+        # "perceptron",
+        # "squared_error",
+        # "huber",
+        # "epsilon_insensitive",
+        # "squared_epsilon_insensitive",
+    ]
+    hp["loss"] = st.selectbox(
+        "Loss",
+        loss_options,
+        index=0,
+        # index=loss_options.index("hinge"),
+        help=hp_desc["loss"],
+    )
+    penalty_options = ["l2", "l1", "elasticnet", None]
+    hp["penalty"] = st.selectbox(
+        "Penalty",
+        penalty_options,
+        index=penalty_options.index("l2"),
+        help=hp_desc["penalty"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.4g",
+        help=hp_desc["alpha"],
+    )
+    hp["l1_ratio"] = st.number_input(
+        "l1_ratio",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.15,
+        step=0.05,
+        help=hp_desc["l1_ratio"],
+    )
+    hp["fit_intercept"] = st.checkbox(
+        "Fit Intercept",
+        value=True,
+        help=hp_desc["fit_intercept"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=1,
+        max_value=5000,
+        value=1000,
+        step=50,
+        help=hp_desc["max_iter"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "tol",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+    )
+    hp["shuffle"] = st.checkbox(
+        "Shuffle",
+        value=True,
+        help=hp_desc["shuffle"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for epsilon.
+    hp["epsilon"] = st.number_input(
+        "Epsilon",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["epsilon"],
+    )
+    learning_rate_options = [
+        "optimal",
+        "constant",
+        "invscaling",
+        "adaptive",
+        "pa1",
+        "pa2",
+    ]
+    hp["learning_rate"] = st.selectbox(
+        "Learning Rate Schedule",
+        learning_rate_options,
+        index=learning_rate_options.index("optimal"),
+        help=hp_desc["learning_rate"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for eta0.
+    hp["eta0"] = st.number_input(
+        "Eta0",
+        min_value=0.0001,
+        max_value=1.0,
+        value=0.01,
+        step=0.01,
+        help=hp_desc["eta0"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for power_t.
+    hp["power_t"] = st.number_input(
+        "Power T",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.05,
+        help=hp_desc["power_t"],
+    )
+    hp["early_stopping"] = st.checkbox(
+        "Early Stopping",
+        value=False,
+        help=hp_desc["early_stopping"],
+    )
+    hp["validation_fraction"] = st.number_input(
+        "Validation Fraction",
+        min_value=0.01,
+        max_value=0.99,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["validation_fraction"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
+    hp["n_iter_no_change"] = st.slider(
+        "N Iterations No Change",
+        min_value=1,
+        max_value=200,
+        value=5,
+        step=1,
+        help=hp_desc["n_iter_no_change"],
+    )
+    hp["average"] = st.checkbox(
+        "Average",
+        value=False,
+        help=hp_desc["average"],
+    )
+    return hp

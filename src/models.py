@@ -7,7 +7,10 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     GradientBoostingClassifier
 )
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import (
+    LogisticRegression,
+    SGDClassifier
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -25,6 +28,10 @@ MODELS: dict[str, Model] = {
     "Logistic Regression": Model(
         factory=lambda: LogisticRegression(),
         widgets=lambda *, hp_desc, **_: wdg.lr_widgets(hp_desc)
+    ),
+    "SGDClassifier": Model(
+        factory=lambda: SGDClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.sgdc_widgets(hp_desc)
     ),
     "K Nearest Neighbors": Model(
         factory=lambda: KNeighborsClassifier(),
