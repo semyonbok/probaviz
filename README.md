@@ -62,8 +62,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
   - [X] `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
   - [X] `sklearn.neighbors.KNeighborsClassifier`
-  - [ ] `sklearn.neighbors.RadiusNeighborsClassifier`
-  - [ ] `sklearn.neighbors.NearestCentroid`
+  - [X] `sklearn.neighbors.RadiusNeighborsClassifier`
+  - [X] `sklearn.neighbors.NearestCentroid`
   - [X] `sklearn.tree.DecisionTreeClassifier`
   - [ ] `sklearn.tree.ExtraTreeClassifier`
   - [X] `sklearn.ensemble.RandomForestClassifier`

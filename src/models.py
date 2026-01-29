@@ -15,7 +15,11 @@ from sklearn.linear_model import (
     LogisticRegression,
     SGDClassifier
 )
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import (
+    KNeighborsClassifier,
+    RadiusNeighborsClassifier,
+    NearestCentroid
+)
 from sklearn.tree import DecisionTreeClassifier
 
 import src.widgets as wdg
@@ -48,6 +52,14 @@ MODELS: dict[str, Model] = {
     "K Nearest Neighbors": Model(
         factory=lambda: KNeighborsClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.knc_widgets(hp_desc)
+    ),
+    "Radius Neighbors Classifier": Model(
+        factory=lambda: RadiusNeighborsClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.rnc_widgets(hp_desc)
+    ),
+    "Nearest Centroid": Model(
+        factory=lambda: NearestCentroid(),
+        widgets=lambda *, hp_desc, **_: wdg.nc_widgets(hp_desc)
     ),
     "Decision Tree": Model(
         factory=lambda: DecisionTreeClassifier(),

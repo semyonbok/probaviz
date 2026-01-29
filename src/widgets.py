@@ -173,6 +173,83 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
+def nc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    hp["metric"] = st.selectbox(
+        "Metric",
+        ["euclidean", "manhattan"],
+        index=0,
+        help=hp_desc["metric"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for shrink_threshold.
+    hp["shrink_threshold"] = none_or_widget(
+        "shrink_threshold",
+        widget=st.number_input,
+        min_value=0.0,
+        max_value=10.0,
+        value=0.0,
+        step=0.1,
+        help=hp_desc["shrink_threshold"],
+    )
+    hp["priors"] = st.selectbox(
+        "Priors",
+        ["uniform", "empirical"],
+        index=0,
+        help=hp_desc["priors"],
+    )
+    return hp
+
+
+def rnc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for radius.
+    hp["radius"] = st.number_input(
+        "Radius",
+        min_value=0.01,
+        max_value=10.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["radius"],
+    )
+    hp["weights"] = st.selectbox(
+        "Weights",
+        ["uniform", "distance"],
+        index=0,
+        help=hp_desc["weights"],
+    )
+    hp["algorithm"] = st.selectbox(
+        "Algorithm",
+        ["auto", "ball_tree", "kd_tree", "brute"],
+        index=0,
+        help=hp_desc["algorithm"],
+    )
+    hp["leaf_size"] = st.slider(
+        "Leaf Size",
+        min_value=1,
+        max_value=100,
+        value=30,
+        help=hp_desc["leaf_size"],
+    )
+    # Conservative bounds: estimator expects positive p values.
+    hp["p"] = st.slider(
+        "Power",
+        min_value=1,
+        max_value=10,
+        value=2,
+        help=hp_desc["p"],
+    )
+    hp["metric"] = st.selectbox(
+        "Metric",
+        [
+            "minkowski", "cityblock", "cosine", "euclidean",
+            "haversine", "l1", "l2", "manhattan", "nan_euclidean",
+        ],
+        index=0,
+        help=hp_desc["metric"],
+    )
+    return hp
+
+
 def dtc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     hp["criterion"] = st.selectbox(
