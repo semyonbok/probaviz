@@ -40,7 +40,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
 - [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
 - [ ] Re-read VS Code documentation on AI tools and try GitHub Copilot
-- [ ] Familiarise with and try Codex
+- [X] Familiarise with and try Codex
 
 ### 📊 Data Handling
 - [ ] Binary/multiclass toy datasets
@@ -56,19 +56,47 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 ### 🎛️ Model & Interaction Features
 - [ ] Reset model button
 - [X] Graceful failure in case of invalid hyper-parameter combo
-- [ ] Add all relevant scikit-learn classifiers
+- [ ] Add all "standalone" scikit-learn classifiers:
+  - [X] `sklearn.linear_model.LogisticRegression`
+  - [X] `sklearn.linear_model.SGDClassifier`
+  - [X] `sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+  - [X] `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+  - [X] `sklearn.neighbors.KNeighborsClassifier`
+  - [ ] `sklearn.neighbors.RadiusNeighborsClassifier`
+  - [ ] `sklearn.neighbors.NearestCentroid`
+  - [X] `sklearn.tree.DecisionTreeClassifier`
+  - [ ] `sklearn.tree.ExtraTreeClassifier`
+  - [X] `sklearn.ensemble.RandomForestClassifier`
+  - [ ] `sklearn.ensemble.ExtraTreesClassifier`
+  - [X] `sklearn.ensemble.GradientBoostingClassifier`
+  - [ ] `sklearn.ensemble.HistGradientBoostingClassifier`
+  - [ ] `sklearn.ensemble.AdaBoostClassifier`
+  - [ ] `sklearn.ensemble.BaggingClassifier`
+  - [ ] `sklearn.svm.SVC`
+  - [ ] `sklearn.svm.NuSVC`
+  - [ ] `sklearn.neural_network.MLPClassifier`
+  - [ ] `sklearn.gaussian_process.GaussianProcessClassifier`
+  - [ ] `sklearn.naive_bayes.GaussianNB`
+  - [ ] `sklearn.naive_bayes.BernoulliNB`
+  - [ ] `sklearn.naive_bayes.MultinomialNB`
+  - [ ] `sklearn.naive_bayes.ComplementNB`
+  - [ ] `sklearn.naive_bayes.CategoricalNB`
+  - [ ] `sklearn.semi_supervised.LabelPropagation`
+  - [ ] `sklearn.semi_supervised.LabelSpreading`
+
 - [ ] Add meta ensemble models (voting, stacking, etc.)
 - [ ] Add feature pre-processing
 
 ### 🧩 UI / UX Improvements
-- [ ] Use plotly for backend
+- [ ] Migrate to a more interactive plotting framework like `plotly` 
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
-- [ ] Dedicated help / info toggles for all data visualization tabs
+- [ ] Dedicated help/info toggles for all data visualization tabs
 - [X] Move model params out of contour plot title
 - [X] Standardize widget generation patterns (model registry?)
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
+- [ ] Skip probability surface plotting for `SGDClassifier` to enable all loss functions
 
 ### 🧠 GenAI Component
 - [ ] LLM component reacting to user's most recent change (explain what changed / why)
