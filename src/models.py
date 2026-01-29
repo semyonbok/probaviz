@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from typing import Callable, Dict
 
 from sklearn.base import BaseEstimator
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis
+)
 from sklearn.ensemble import (
     RandomForestClassifier,
     GradientBoostingClassifier
@@ -32,6 +36,14 @@ MODELS: dict[str, Model] = {
     "SGDClassifier": Model(
         factory=lambda: SGDClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.sgdc_widgets(hp_desc)
+    ),
+    "Linear Discriminant Analysis": Model(
+        factory=lambda: LinearDiscriminantAnalysis(),
+        widgets=lambda *, hp_desc, **_: wdg.lda_widgets(hp_desc)
+    ),
+    "Quadratic Discriminant Analysis": Model(
+        factory=lambda: QuadraticDiscriminantAnalysis(),
+        widgets=lambda *, hp_desc, **_: wdg.qda_widgets(hp_desc)
     ),
     "K Nearest Neighbors": Model(
         factory=lambda: KNeighborsClassifier(),

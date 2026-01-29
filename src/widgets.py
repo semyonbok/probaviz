@@ -633,3 +633,112 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         help=hp_desc["average"],
     )
     return hp
+
+
+def lda_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    solver_options = ["svd", "lsqr", "eigen"]
+    hp["solver"] = st.selectbox(
+        "Solver",
+        solver_options,
+        index=solver_options.index("svd"),
+        help=hp_desc["solver"],
+    )
+    shrinkage_mode_options = [None, "auto", "float"]
+    shrinkage_mode = st.selectbox(
+        "Shrinkage Mode",
+        shrinkage_mode_options,
+        index=shrinkage_mode_options.index(None),
+        help=hp_desc["shrinkage"],
+    )
+    if shrinkage_mode == "float":
+        # Conservative bounds: estimator does not define explicit limits for shrinkage.
+        hp["shrinkage"] = st.number_input(
+            "Shrinkage",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.1,
+            step=0.05,
+            help=hp_desc["shrinkage"],
+        )
+    else:
+        hp["shrinkage"] = shrinkage_mode
+    # Conservative bounds: estimator does not define explicit limits for n_components.
+    hp["n_components"] = none_or_widget(
+        "n_components",
+        min_value=1,
+        max_value=50,
+        value=2,
+        step=1,
+        help=hp_desc["n_components"],
+    )
+    hp["store_covariance"] = st.checkbox(
+        "Store Covariance",
+        value=False,
+        help=hp_desc["store_covariance"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+    )
+    return hp
+
+
+def qda_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    solver_options = ["svd", "eigen"]
+    hp["solver"] = st.selectbox(
+        "Solver",
+        solver_options,
+        index=solver_options.index("svd"),
+        help=hp_desc["solver"],
+    )
+    shrinkage_mode_options = [None, "auto", "float"]
+    shrinkage_mode = st.selectbox(
+        "Shrinkage Mode",
+        shrinkage_mode_options,
+        index=shrinkage_mode_options.index(None),
+        help=hp_desc["shrinkage"],
+    )
+    if shrinkage_mode == "float":
+        # Conservative bounds: estimator does not define explicit limits for shrinkage.
+        hp["shrinkage"] = st.number_input(
+            "Shrinkage",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.1,
+            step=0.05,
+            help=hp_desc["shrinkage"],
+        )
+    else:
+        hp["shrinkage"] = shrinkage_mode
+    hp["reg_param"] = st.number_input(
+        "Reg Param",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["reg_param"],
+    )
+    hp["store_covariance"] = st.checkbox(
+        "Store Covariance",
+        value=False,
+        help=hp_desc["store_covariance"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+    )
+    return hp

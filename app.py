@@ -8,14 +8,13 @@ from src.widgets import none_or_widget
 from src.models import MODELS
 
 
-# streamlit helpers
+# streamlit data processing functions
 def _on_dataset_change() -> None:
-    # When dataset changes (incl. to None), reset everything derived from it
+    """When dataset changes, reset everything derived from it"""
     for k in ["pv", "set_and_features", "f1", "f2"]:
         st.session_state.pop(k, None)
 
 
-# data processing functions
 @st.cache_data
 def process_toy(set_name):
     if set_name == "Wine":
@@ -32,6 +31,7 @@ def process_toy(set_name):
     return data_set["data"], data_set["target"]
 
 
+# parsers
 def parse_param_desc(model):
     params = model.get_params().keys()
     params = "|".join([p + " : " for p in params])
@@ -162,6 +162,6 @@ else:
         )
         with st.expander("Model Info", icon="ℹ️"):
             st.info(parse_model_desc(model))
-    except ValueError as e:
+    except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
         st.stop()
