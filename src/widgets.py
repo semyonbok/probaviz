@@ -330,6 +330,92 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
+def etc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    hp["criterion"] = st.selectbox(
+        "Criterion",
+        ["gini", "entropy", "log_loss"],
+        index=0,
+        help=hp_desc["criterion"],
+    )
+    hp["splitter"] = st.selectbox(
+        "Splitter",
+        ["random", "best"],
+        index=0,
+        help=hp_desc["splitter"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_depth.
+    hp["max_depth"] = none_or_widget(
+        "max_depth",
+        min_value=1,
+        max_value=20,
+        value=5,
+        help=hp_desc["max_depth"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_split.
+    hp["min_samples_split"] = st.slider(
+        "Min Samples Split",
+        min_value=2,
+        max_value=20,
+        value=2,
+        help=hp_desc["min_samples_split"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
+    hp["min_samples_leaf"] = st.slider(
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=20,
+        value=1,
+        help=hp_desc["min_samples_leaf"],
+    )
+    hp["min_weight_fraction_leaf"] = st.number_input(
+        "Min Weight Fraction Leaf",
+        min_value=0.0,
+        max_value=0.5,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["min_weight_fraction_leaf"],
+    )
+    max_features_options = [None, "sqrt", "log2"]
+    hp["max_features"] = st.selectbox(
+        "Max Features",
+        max_features_options,
+        index=max_features_options.index("sqrt"),
+        help=hp_desc["max_features"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
+    hp["max_leaf_nodes"] = none_or_widget(
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=100,
+        value=10,
+        help=hp_desc["max_leaf_nodes"],
+    )
+    hp["min_impurity_decrease"] = st.number_input(
+        "Min Impurity Decrease",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["min_impurity_decrease"],
+    )
+    class_weight_options = [None, "balanced"]
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        class_weight_options,
+        index=class_weight_options.index(None),
+        help=hp_desc["class_weight"],
+    )
+    hp["ccp_alpha"] = st.number_input(
+        "CCP Alpha",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["ccp_alpha"],
+    )
+    return hp
+
+
 def rfc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     # Conservative bounds: estimator does not define explicit limits for n_estimators.
@@ -405,6 +491,114 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
     hp["bootstrap"] = st.checkbox(
         "Bootstrap",
         value=True,
+        help=hp_desc["bootstrap"],
+    )
+    hp["oob_score"] = st.checkbox(
+        "OOB Score",
+        value=False,
+        help=hp_desc["oob_score"],
+    )
+    class_weight_options = [None, "balanced", "balanced_subsample"]
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        class_weight_options,
+        index=class_weight_options.index(None),
+        help=hp_desc["class_weight"],
+    )
+    hp["ccp_alpha"] = st.number_input(
+        "CCP Alpha",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["ccp_alpha"],
+    )
+    # Conservative bounds: max_samples allows int sample counts or (0, 1] fractions.
+    hp["max_samples"] = none_or_widget(
+        "max_samples",
+        widget=st.number_input,
+        min_value=0.1,
+        max_value=1.0,
+        value=1.0,
+        step=0.05,
+        help=hp_desc["max_samples"],
+    )
+    return hp
+
+
+def etsc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for n_estimators.
+    hp["n_estimators"] = st.slider(
+        "Number of Estimators",
+        min_value=1,
+        max_value=500,
+        value=100,
+        help=hp_desc["n_estimators"],
+    )
+    hp["criterion"] = st.selectbox(
+        "Criterion",
+        ["gini", "entropy", "log_loss"],
+        index=0,
+        help=hp_desc["criterion"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_depth.
+    hp["max_depth"] = none_or_widget(
+        "max_depth",
+        min_value=1,
+        max_value=20,
+        value=5,
+        help=hp_desc["max_depth"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_split.
+    hp["min_samples_split"] = st.slider(
+        "Min Samples Split",
+        min_value=2,
+        max_value=20,
+        value=2,
+        help=hp_desc["min_samples_split"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
+    hp["min_samples_leaf"] = st.slider(
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=20,
+        value=1,
+        help=hp_desc["min_samples_leaf"],
+    )
+    hp["min_weight_fraction_leaf"] = st.number_input(
+        "Min Weight Fraction Leaf",
+        min_value=0.0,
+        max_value=0.5,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["min_weight_fraction_leaf"],
+    )
+    max_features_options = [None, "sqrt", "log2"]
+    hp["max_features"] = st.selectbox(
+        "Max Features",
+        max_features_options,
+        index=max_features_options.index("sqrt"),
+        help=hp_desc["max_features"],
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
+    hp["max_leaf_nodes"] = none_or_widget(
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=100,
+        value=10,
+        help=hp_desc["max_leaf_nodes"],
+    )
+    hp["min_impurity_decrease"] = st.number_input(
+        "Min Impurity Decrease",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["min_impurity_decrease"],
+    )
+    hp["bootstrap"] = st.checkbox(
+        "Bootstrap",
+        value=False,
         help=hp_desc["bootstrap"],
     )
     hp["oob_score"] = st.checkbox(

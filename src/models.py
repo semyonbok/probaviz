@@ -8,19 +8,17 @@ from sklearn.discriminant_analysis import (
     QuadraticDiscriminantAnalysis
 )
 from sklearn.ensemble import (
+    ExtraTreesClassifier,
     RandomForestClassifier,
     GradientBoostingClassifier
 )
-from sklearn.linear_model import (
-    LogisticRegression,
-    SGDClassifier
-)
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.neighbors import (
     KNeighborsClassifier,
     RadiusNeighborsClassifier,
     NearestCentroid
 )
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
 
 import src.widgets as wdg
 
@@ -64,6 +62,14 @@ MODELS: dict[str, Model] = {
     "Decision Tree": Model(
         factory=lambda: DecisionTreeClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.dtc_widgets(hp_desc)
+    ),
+    "Extra Tree Classifier": Model(
+        factory=lambda: ExtraTreeClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.etc_widgets(hp_desc)
+    ),
+    "Extra Trees Classifier": Model(
+        factory=lambda: ExtraTreesClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.etsc_widgets(hp_desc)
     ),
     "Random Forest": Model(
         factory=lambda: RandomForestClassifier(),
