@@ -165,3 +165,10 @@ else:
     except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
         st.stop()
+    except AttributeError:
+        st.error(
+            "❌ **This model configuration cannot predict probability scores.** "
+            "Try changing hyper-parameters (e.g., Loss or Metric) "
+            "or refer to documentation."
+        )
+        st.stop()

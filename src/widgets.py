@@ -568,23 +568,21 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
 
 def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
-    # Limit loss options to enable predict_proba
     loss_options = [
-        # "hinge",
+        "hinge",
         "log_loss",
         "modified_huber",
-        # "squared_hinge",
-        # "perceptron",
-        # "squared_error",
-        # "huber",
-        # "epsilon_insensitive",
-        # "squared_epsilon_insensitive",
+        "squared_hinge",
+        "perceptron",
+        "squared_error",
+        "huber",
+        "epsilon_insensitive",
+        "squared_epsilon_insensitive",
     ]
     hp["loss"] = st.selectbox(
         "Loss",
         loss_options,
-        index=0,
-        # index=loss_options.index("hinge"),
+        index=loss_options.index("hinge"),
         help=hp_desc["loss"],
     )
     penalty_options = ["l2", "l1", "elasticnet", None]
