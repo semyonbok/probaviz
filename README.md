@@ -55,7 +55,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 
 ### 🎛️ Model & Interaction Features
 - [ ] Reset model button
-- [ ] Ensure switching model resets widgets
+- [X] Ensure switching model resets widgets
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [ ] Add all "standalone" scikit-learn classifiers:
   - [X] `sklearn.linear_model.LogisticRegression`

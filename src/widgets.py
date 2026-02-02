@@ -44,6 +44,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         penalty_options,
         index=penalty_options.index(penalty_default),
         help=hp_desc["penalty"],
+        key="lr_penalty",
     )
     # Conservative bounds: estimator does not define explicit limits for C.
     hp["C"] = st.number_input(
@@ -53,6 +54,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.01,
         help=hp_desc["C"],
+        key="lr_C",
     )
     hp["l1_ratio"] = st.number_input(
         "L1 Ratio",
@@ -61,11 +63,13 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.05,
         help=hp_desc["l1_ratio"],
+        key="lr_l1_ratio",
     )
     hp["dual"] = st.checkbox(
         "Dual Formulation",
         value=False,
         help=hp_desc["dual"],
+        key="lr_dual",
     )
     # Conservative bounds: estimator does not define explicit limits for tol.
     hp["tol"] = st.number_input(
@@ -76,11 +80,13 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.2e",
         help=hp_desc["tol"],
+        key="lr_tol",
     )
     hp["fit_intercept"] = st.checkbox(
         "Fit Intercept",
         value=True,
         help=hp_desc["fit_intercept"],
+        key="lr_fit_intercept",
     )
     # Conservative bounds: estimator does not define explicit limits for intercept_scaling.
     hp["intercept_scaling"] = st.number_input(
@@ -90,6 +96,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.1,
         help=hp_desc["intercept_scaling"],
+        key="lr_intercept_scaling",
     )
     class_weight_options = [None, "balanced"]
     class_weight_default = None
@@ -98,6 +105,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         class_weight_options,
         index=class_weight_options.index(class_weight_default),
         help=hp_desc["class_weight"],
+        key="lr_class_weight",
     )
     solver_options = [
         "lbfgs",
@@ -113,6 +121,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         solver_options,
         index=solver_options.index(solver_default),
         help=hp_desc["solver"],
+        key="lr_solver",
     )
     # Conservative bounds: estimator does not define explicit limits for max_iter.
     hp["max_iter"] = st.slider(
@@ -122,6 +131,7 @@ def lr_widgets(hp_desc: dict[str, str]) -> dict:
         value=100,
         step=10,
         help=hp_desc["max_iter"],
+        key="lr_max_iter",
     )
     return hp
 
@@ -134,18 +144,21 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=5,
         help=hp_desc["n_neighbors"],
+        key="knc_n_neighbors",
     )
     hp["weights"] = st.selectbox(
         "Weights",
         ["uniform", "distance"],
         index=0,
         help=hp_desc["weights"],
+        key="knc_weights",
     )
     hp["algorithm"] = st.selectbox(
         "Algorithm",
         ["auto", "ball_tree", "kd_tree", "brute"],
         index=0,
         help=hp_desc["algorithm"],
+        key="knc_algorithm",
     )
     hp["leaf_size"] = st.slider(
         "Leaf Size",
@@ -153,6 +166,7 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=30,
         help=hp_desc["leaf_size"],
+        key="knc_leaf_size",
     )
     hp["p"] = st.slider(
         "Power",
@@ -160,6 +174,7 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=2,
         help=hp_desc["p"],
+        key="knc_p",
     )
     hp["metric"] = st.selectbox(
         "Metric",
@@ -169,6 +184,7 @@ def knc_widgets(hp_desc: dict[str, str]) -> dict:
         ],
         index=0,
         help=hp_desc["metric"],
+        key="knc_metric",
     )
     return hp
 
@@ -180,6 +196,7 @@ def nc_widgets(hp_desc: dict[str, str]) -> dict:
         ["euclidean", "manhattan"],
         index=0,
         help=hp_desc["metric"],
+        key="nc_metric",
     )
     # Conservative bounds: estimator does not define explicit limits for shrink_threshold.
     hp["shrink_threshold"] = none_or_widget(
@@ -190,12 +207,15 @@ def nc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.1,
         help=hp_desc["shrink_threshold"],
+        key="nc_shrink_threshold",
+        checkbox_kwargs={"key": "nc_shrink_threshold__is_set"},
     )
     hp["priors"] = st.selectbox(
         "Priors",
         ["uniform", "empirical"],
         index=0,
         help=hp_desc["priors"],
+        key="nc_priors",
     )
     return hp
 
@@ -210,18 +230,21 @@ def rnc_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.01,
         help=hp_desc["radius"],
+        key="rnc_radius",
     )
     hp["weights"] = st.selectbox(
         "Weights",
         ["uniform", "distance"],
         index=0,
         help=hp_desc["weights"],
+        key="rnc_weights",
     )
     hp["algorithm"] = st.selectbox(
         "Algorithm",
         ["auto", "ball_tree", "kd_tree", "brute"],
         index=0,
         help=hp_desc["algorithm"],
+        key="rnc_algorithm",
     )
     hp["leaf_size"] = st.slider(
         "Leaf Size",
@@ -229,6 +252,7 @@ def rnc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=30,
         help=hp_desc["leaf_size"],
+        key="rnc_leaf_size",
     )
     # Conservative bounds: estimator expects positive p values.
     hp["p"] = st.slider(
@@ -237,6 +261,7 @@ def rnc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=10,
         value=2,
         help=hp_desc["p"],
+        key="rnc_p",
     )
     hp["metric"] = st.selectbox(
         "Metric",
@@ -246,6 +271,7 @@ def rnc_widgets(hp_desc: dict[str, str]) -> dict:
         ],
         index=0,
         help=hp_desc["metric"],
+        key="rnc_metric",
     )
     return hp
 
@@ -257,12 +283,14 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         ["gini", "entropy", "log_loss"],
         index=0,
         help=hp_desc["criterion"],
+        key="dtc_criterion",
     )
     hp["splitter"] = st.selectbox(
         "Splitter",
         ["best", "random"],
         index=0,
         help=hp_desc["splitter"],
+        key="dtc_splitter",
     )
     hp["max_depth"] = none_or_widget(
         "max_depth",
@@ -270,6 +298,8 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=5,
         help=hp_desc["max_depth"],
+        key="dtc_max_depth",
+        checkbox_kwargs={"key": "dtc_max_depth__is_set"},
     )
     hp["min_samples_split"] = st.slider(
         "Min Samples Split",
@@ -277,6 +307,7 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=2,
         help=hp_desc["min_samples_split"],
+        key="dtc_min_samples_split",
     )
     hp["min_samples_leaf"] = st.slider(
         "Min Samples Leaf",
@@ -284,6 +315,7 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=1,
         help=hp_desc["min_samples_leaf"],
+        key="dtc_min_samples_leaf",
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
         "Min Weight Fraction Leaf",
@@ -292,12 +324,14 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
+        key="dtc_min_weight_fraction_leaf",
     )
     hp["max_features"] = st.selectbox(
         "Max Features",
         [None, "sqrt", "log2"],
         index=0,
         help=hp_desc["max_features"],
+        key="dtc_max_features",
     )
     hp["max_leaf_nodes"] = none_or_widget(
         "max_leaf_nodes",
@@ -305,6 +339,8 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=10,
         help=hp_desc["max_leaf_nodes"],
+        key="dtc_max_leaf_nodes",
+        checkbox_kwargs={"key": "dtc_max_leaf_nodes__is_set"},
     )
     hp["min_impurity_decrease"] = st.number_input(
         "Min Impurity Decrease",
@@ -313,12 +349,14 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_impurity_decrease"],
+        key="dtc_min_impurity_decrease",
     )
     hp["class_weight"] = st.selectbox(
         "Class Weight",
         [None, "balanced"],
         index=0,
         help=hp_desc["class_weight"],
+        key="dtc_class_weight",
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
@@ -326,6 +364,7 @@ def dtc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["ccp_alpha"],
+        key="dtc_ccp_alpha",
     )
     return hp
 
@@ -337,12 +376,14 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         ["gini", "entropy", "log_loss"],
         index=0,
         help=hp_desc["criterion"],
+        key="etc_criterion",
     )
     hp["splitter"] = st.selectbox(
         "Splitter",
         ["random", "best"],
         index=0,
         help=hp_desc["splitter"],
+        key="etc_splitter",
     )
     # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = none_or_widget(
@@ -351,6 +392,8 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=5,
         help=hp_desc["max_depth"],
+        key="etc_max_depth",
+        checkbox_kwargs={"key": "etc_max_depth__is_set"},
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
@@ -359,6 +402,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=2,
         help=hp_desc["min_samples_split"],
+        key="etc_min_samples_split",
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
@@ -367,6 +411,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=1,
         help=hp_desc["min_samples_leaf"],
+        key="etc_min_samples_leaf",
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
         "Min Weight Fraction Leaf",
@@ -375,6 +420,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
+        key="etc_min_weight_fraction_leaf",
     )
     max_features_options = [None, "sqrt", "log2"]
     hp["max_features"] = st.selectbox(
@@ -382,6 +428,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         max_features_options,
         index=max_features_options.index("sqrt"),
         help=hp_desc["max_features"],
+        key="etc_max_features",
     )
     # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
@@ -390,6 +437,8 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=10,
         help=hp_desc["max_leaf_nodes"],
+        key="etc_max_leaf_nodes",
+        checkbox_kwargs={"key": "etc_max_leaf_nodes__is_set"},
     )
     hp["min_impurity_decrease"] = st.number_input(
         "Min Impurity Decrease",
@@ -398,6 +447,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_impurity_decrease"],
+        key="etc_min_impurity_decrease",
     )
     class_weight_options = [None, "balanced"]
     hp["class_weight"] = st.selectbox(
@@ -405,6 +455,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         class_weight_options,
         index=class_weight_options.index(None),
         help=hp_desc["class_weight"],
+        key="etc_class_weight",
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
@@ -412,6 +463,7 @@ def etc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["ccp_alpha"],
+        key="etc_ccp_alpha",
     )
     return hp
 
@@ -425,6 +477,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=500,
         value=100,
         help=hp_desc["n_estimators"],
+        key="rfc_n_estimators",
     )
     criterion_options = ["gini", "entropy", "log_loss"]
     hp["criterion"] = st.selectbox(
@@ -432,6 +485,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         criterion_options,
         index=criterion_options.index("gini"),
         help=hp_desc["criterion"],
+        key="rfc_criterion",
     )
     # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = none_or_widget(
@@ -440,6 +494,8 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=5,
         help=hp_desc["max_depth"],
+        key="rfc_max_depth",
+        checkbox_kwargs={"key": "rfc_max_depth__is_set"},
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
@@ -448,6 +504,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=2,
         help=hp_desc["min_samples_split"],
+        key="rfc_min_samples_split",
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
@@ -456,6 +513,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=1,
         help=hp_desc["min_samples_leaf"],
+        key="rfc_min_samples_leaf",
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
         "Min Weight Fraction Leaf",
@@ -464,6 +522,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
+        key="rfc_min_weight_fraction_leaf",
     )
     max_features_options = [None, "sqrt", "log2"]
     hp["max_features"] = st.selectbox(
@@ -471,6 +530,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_features_options,
         index=max_features_options.index("sqrt"),
         help=hp_desc["max_features"],
+        key="rfc_max_features",
     )
     # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
@@ -479,6 +539,8 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=10,
         help=hp_desc["max_leaf_nodes"],
+        key="rfc_max_leaf_nodes",
+        checkbox_kwargs={"key": "rfc_max_leaf_nodes__is_set"},
     )
     hp["min_impurity_decrease"] = st.number_input(
         "Min Impurity Decrease",
@@ -487,16 +549,19 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_impurity_decrease"],
+        key="rfc_min_impurity_decrease",
     )
     hp["bootstrap"] = st.checkbox(
         "Bootstrap",
         value=True,
         help=hp_desc["bootstrap"],
+        key="rfc_bootstrap",
     )
     hp["oob_score"] = st.checkbox(
         "OOB Score",
         value=False,
         help=hp_desc["oob_score"],
+        key="rfc_oob_score",
     )
     class_weight_options = [None, "balanced", "balanced_subsample"]
     hp["class_weight"] = st.selectbox(
@@ -504,6 +569,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         class_weight_options,
         index=class_weight_options.index(None),
         help=hp_desc["class_weight"],
+        key="rfc_class_weight",
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
@@ -511,6 +577,7 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["ccp_alpha"],
+        key="rfc_ccp_alpha",
     )
     # Conservative bounds: max_samples allows int sample counts or (0, 1] fractions.
     hp["max_samples"] = none_or_widget(
@@ -521,6 +588,8 @@ def rfc_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.05,
         help=hp_desc["max_samples"],
+        key="rfc_max_samples",
+        checkbox_kwargs={"key": "rfc_max_samples__is_set"},
     )
     return hp
 
@@ -534,12 +603,14 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=500,
         value=100,
         help=hp_desc["n_estimators"],
+        key="etsc_n_estimators",
     )
     hp["criterion"] = st.selectbox(
         "Criterion",
         ["gini", "entropy", "log_loss"],
         index=0,
         help=hp_desc["criterion"],
+        key="etsc_criterion",
     )
     # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = none_or_widget(
@@ -548,6 +619,8 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=5,
         help=hp_desc["max_depth"],
+        key="etsc_max_depth",
+        checkbox_kwargs={"key": "etsc_max_depth__is_set"},
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
@@ -556,6 +629,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=2,
         help=hp_desc["min_samples_split"],
+        key="etsc_min_samples_split",
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
@@ -564,6 +638,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=1,
         help=hp_desc["min_samples_leaf"],
+        key="etsc_min_samples_leaf",
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
         "Min Weight Fraction Leaf",
@@ -572,6 +647,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
+        key="etsc_min_weight_fraction_leaf",
     )
     max_features_options = [None, "sqrt", "log2"]
     hp["max_features"] = st.selectbox(
@@ -579,6 +655,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_features_options,
         index=max_features_options.index("sqrt"),
         help=hp_desc["max_features"],
+        key="etsc_max_features",
     )
     # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
@@ -587,6 +664,8 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=100,
         value=10,
         help=hp_desc["max_leaf_nodes"],
+        key="etsc_max_leaf_nodes",
+        checkbox_kwargs={"key": "etsc_max_leaf_nodes__is_set"},
     )
     hp["min_impurity_decrease"] = st.number_input(
         "Min Impurity Decrease",
@@ -595,16 +674,19 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_impurity_decrease"],
+        key="etsc_min_impurity_decrease",
     )
     hp["bootstrap"] = st.checkbox(
         "Bootstrap",
         value=False,
         help=hp_desc["bootstrap"],
+        key="etsc_bootstrap",
     )
     hp["oob_score"] = st.checkbox(
         "OOB Score",
         value=False,
         help=hp_desc["oob_score"],
+        key="etsc_oob_score",
     )
     class_weight_options = [None, "balanced", "balanced_subsample"]
     hp["class_weight"] = st.selectbox(
@@ -612,6 +694,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         class_weight_options,
         index=class_weight_options.index(None),
         help=hp_desc["class_weight"],
+        key="etsc_class_weight",
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
@@ -619,6 +702,7 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["ccp_alpha"],
+        key="etsc_ccp_alpha",
     )
     # Conservative bounds: max_samples allows int sample counts or (0, 1] fractions.
     hp["max_samples"] = none_or_widget(
@@ -629,6 +713,8 @@ def etsc_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.05,
         help=hp_desc["max_samples"],
+        key="etsc_max_samples",
+        checkbox_kwargs={"key": "etsc_max_samples__is_set"},
     )
     return hp
 
@@ -641,6 +727,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         loss_options,
         index=loss_options.index("log_loss"),
         help=hp_desc["loss"],
+        key="gbc_loss",
     )
     hp["learning_rate"] = st.number_input(
         "Learning Rate",
@@ -648,6 +735,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.1,
         step=0.01,
         help=hp_desc["learning_rate"],
+        key="gbc_learning_rate",
     )
     # Conservative bounds: estimator does not define explicit limits for n_estimators.
     hp["n_estimators"] = st.slider(
@@ -656,6 +744,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=500,
         value=100,
         help=hp_desc["n_estimators"],
+        key="gbc_n_estimators",
     )
     hp["subsample"] = st.number_input(
         "Subsample",
@@ -664,6 +753,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=1.0,
         step=0.01,
         help=hp_desc["subsample"],
+        key="gbc_subsample",
     )
     criterion_options = ["friedman_mse", "squared_error"]
     hp["criterion"] = st.selectbox(
@@ -671,6 +761,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         criterion_options,
         index=criterion_options.index("friedman_mse"),
         help=hp_desc["criterion"],
+        key="gbc_criterion",
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_split.
     hp["min_samples_split"] = st.slider(
@@ -679,6 +770,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=200,
         value=2,
         help=hp_desc["min_samples_split"],
+        key="gbc_min_samples_split",
     )
     # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
     hp["min_samples_leaf"] = st.slider(
@@ -687,6 +779,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=200,
         value=1,
         help=hp_desc["min_samples_leaf"],
+        key="gbc_min_samples_leaf",
     )
     hp["min_weight_fraction_leaf"] = st.number_input(
         "Min Weight Fraction Leaf",
@@ -695,6 +788,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_weight_fraction_leaf"],
+        key="gbc_min_weight_fraction_leaf",
     )
     # Conservative bounds: estimator does not define explicit limits for max_depth.
     hp["max_depth"] = st.slider(
@@ -703,6 +797,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=20,
         value=3,
         help=hp_desc["max_depth"],
+        key="gbc_max_depth",
     )
     hp["min_impurity_decrease"] = st.number_input(
         "Min Impurity Decrease",
@@ -710,6 +805,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["min_impurity_decrease"],
+        key="gbc_min_impurity_decrease",
     )
     max_features_options = [None, "sqrt", "log2"]
     hp["max_features"] = st.selectbox(
@@ -717,6 +813,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_features_options,
         index=max_features_options.index(None),
         help=hp_desc["max_features"],
+        key="gbc_max_features",
     )
     # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
     hp["max_leaf_nodes"] = none_or_widget(
@@ -725,6 +822,8 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=200,
         value=10,
         help=hp_desc["max_leaf_nodes"],
+        key="gbc_max_leaf_nodes",
+        checkbox_kwargs={"key": "gbc_max_leaf_nodes__is_set"},
     )
     hp["validation_fraction"] = st.number_input(
         "Validation Fraction",
@@ -733,6 +832,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.1,
         step=0.01,
         help=hp_desc["validation_fraction"],
+        key="gbc_validation_fraction",
     )
     # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
     hp["n_iter_no_change"] = none_or_widget(
@@ -741,6 +841,8 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         max_value=200,
         value=10,
         help=hp_desc["n_iter_no_change"],
+        key="gbc_n_iter_no_change",
+        checkbox_kwargs={"key": "gbc_n_iter_no_change__is_set"},
     )
     hp["tol"] = st.number_input(
         "Tolerance",
@@ -749,6 +851,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.2e",
         help=hp_desc["tol"],
+        key="gbc_tol",
     )
     hp["ccp_alpha"] = st.number_input(
         "CCP Alpha",
@@ -756,6 +859,7 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["ccp_alpha"],
+        key="gbc_ccp_alpha",
     )
     return hp
 
@@ -778,6 +882,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         loss_options,
         index=loss_options.index("hinge"),
         help=hp_desc["loss"],
+        key="sgdc_loss",
     )
     penalty_options = ["l2", "l1", "elasticnet", None]
     hp["penalty"] = st.selectbox(
@@ -785,6 +890,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         penalty_options,
         index=penalty_options.index("l2"),
         help=hp_desc["penalty"],
+        key="sgdc_penalty",
     )
     # Conservative bounds: estimator does not define explicit limits for alpha.
     hp["alpha"] = st.number_input(
@@ -795,6 +901,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.4g",
         help=hp_desc["alpha"],
+        key="sgdc_alpha",
     )
     hp["l1_ratio"] = st.number_input(
         "l1_ratio",
@@ -803,11 +910,13 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.15,
         step=0.05,
         help=hp_desc["l1_ratio"],
+        key="sgdc_l1_ratio",
     )
     hp["fit_intercept"] = st.checkbox(
         "Fit Intercept",
         value=True,
         help=hp_desc["fit_intercept"],
+        key="sgdc_fit_intercept",
     )
     # Conservative bounds: estimator does not define explicit limits for max_iter.
     hp["max_iter"] = st.slider(
@@ -817,6 +926,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=1000,
         step=50,
         help=hp_desc["max_iter"],
+        key="sgdc_max_iter",
     )
     # Conservative bounds: estimator does not define explicit limits for tol.
     hp["tol"] = st.number_input(
@@ -827,11 +937,13 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.2e",
         help=hp_desc["tol"],
+        key="sgdc_tol",
     )
     hp["shuffle"] = st.checkbox(
         "Shuffle",
         value=True,
         help=hp_desc["shuffle"],
+        key="sgdc_shuffle",
     )
     # Conservative bounds: estimator does not define explicit limits for epsilon.
     hp["epsilon"] = st.number_input(
@@ -841,6 +953,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.1,
         step=0.01,
         help=hp_desc["epsilon"],
+        key="sgdc_epsilon",
     )
     learning_rate_options = [
         "optimal",
@@ -855,6 +968,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         learning_rate_options,
         index=learning_rate_options.index("optimal"),
         help=hp_desc["learning_rate"],
+        key="sgdc_learning_rate",
     )
     # Conservative bounds: estimator does not define explicit limits for eta0.
     hp["eta0"] = st.number_input(
@@ -864,6 +978,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.01,
         step=0.01,
         help=hp_desc["eta0"],
+        key="sgdc_eta0",
     )
     # Conservative bounds: estimator does not define explicit limits for power_t.
     hp["power_t"] = st.number_input(
@@ -873,11 +988,13 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.5,
         step=0.05,
         help=hp_desc["power_t"],
+        key="sgdc_power_t",
     )
     hp["early_stopping"] = st.checkbox(
         "Early Stopping",
         value=False,
         help=hp_desc["early_stopping"],
+        key="sgdc_early_stopping",
     )
     hp["validation_fraction"] = st.number_input(
         "Validation Fraction",
@@ -886,6 +1003,7 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.1,
         step=0.01,
         help=hp_desc["validation_fraction"],
+        key="sgdc_validation_fraction",
     )
     # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
     hp["n_iter_no_change"] = st.slider(
@@ -895,11 +1013,13 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=5,
         step=1,
         help=hp_desc["n_iter_no_change"],
+        key="sgdc_n_iter_no_change",
     )
     hp["average"] = st.checkbox(
         "Average",
         value=False,
         help=hp_desc["average"],
+        key="sgdc_average",
     )
     return hp
 
@@ -912,6 +1032,7 @@ def lda_widgets(hp_desc: dict[str, str]) -> dict:
         solver_options,
         index=solver_options.index("svd"),
         help=hp_desc["solver"],
+        key="lda_solver",
     )
     shrinkage_mode_options = [None, "auto", "float"]
     shrinkage_mode = st.selectbox(
@@ -919,6 +1040,7 @@ def lda_widgets(hp_desc: dict[str, str]) -> dict:
         shrinkage_mode_options,
         index=shrinkage_mode_options.index(None),
         help=hp_desc["shrinkage"],
+        key="lda_shrinkage_mode",
     )
     if shrinkage_mode == "float":
         # Conservative bounds: estimator does not define explicit limits for shrinkage.
@@ -929,6 +1051,7 @@ def lda_widgets(hp_desc: dict[str, str]) -> dict:
             value=0.1,
             step=0.05,
             help=hp_desc["shrinkage"],
+            key="lda_shrinkage",
         )
     else:
         hp["shrinkage"] = shrinkage_mode
@@ -940,11 +1063,14 @@ def lda_widgets(hp_desc: dict[str, str]) -> dict:
         value=2,
         step=1,
         help=hp_desc["n_components"],
+        key="lda_n_components",
+        checkbox_kwargs={"key": "lda_n_components__is_set"},
     )
     hp["store_covariance"] = st.checkbox(
         "Store Covariance",
         value=False,
         help=hp_desc["store_covariance"],
+        key="lda_store_covariance",
     )
     # Conservative bounds: estimator does not define explicit limits for tol.
     hp["tol"] = st.number_input(
@@ -955,6 +1081,7 @@ def lda_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.2e",
         help=hp_desc["tol"],
+        key="lda_tol",
     )
     return hp
 
@@ -967,6 +1094,7 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
         solver_options,
         index=solver_options.index("svd"),
         help=hp_desc["solver"],
+        key="qda_solver",
     )
     shrinkage_mode_options = [None, "auto", "float"]
     shrinkage_mode = st.selectbox(
@@ -974,6 +1102,7 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
         shrinkage_mode_options,
         index=shrinkage_mode_options.index(None),
         help=hp_desc["shrinkage"],
+        key="qda_shrinkage_mode",
     )
     if shrinkage_mode == "float":
         # Conservative bounds: estimator does not define explicit limits for shrinkage.
@@ -984,6 +1113,7 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
             value=0.1,
             step=0.05,
             help=hp_desc["shrinkage"],
+            key="qda_shrinkage",
         )
     else:
         hp["shrinkage"] = shrinkage_mode
@@ -994,11 +1124,13 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
         value=0.0,
         step=0.01,
         help=hp_desc["reg_param"],
+        key="qda_reg_param",
     )
     hp["store_covariance"] = st.checkbox(
         "Store Covariance",
         value=False,
         help=hp_desc["store_covariance"],
+        key="qda_store_covariance",
     )
     # Conservative bounds: estimator does not define explicit limits for tol.
     hp["tol"] = st.number_input(
@@ -1009,5 +1141,6 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
         step=0.0001,
         format="%.2e",
         help=hp_desc["tol"],
+        key="qda_tol",
     )
     return hp
