@@ -70,9 +70,9 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.ensemble.RandomForestClassifier`
   - [X] `sklearn.ensemble.ExtraTreesClassifier`
   - [X] `sklearn.ensemble.GradientBoostingClassifier`
-  - [ ] `sklearn.ensemble.HistGradientBoostingClassifier`
-  - [ ] `sklearn.ensemble.AdaBoostClassifier`
-  - [ ] `sklearn.ensemble.BaggingClassifier`
+  - [X] `sklearn.ensemble.HistGradientBoostingClassifier`
+  - [X] `sklearn.ensemble.AdaBoostClassifier`
+  - [X] `sklearn.ensemble.BaggingClassifier`
   - [ ] `sklearn.svm.SVC`
   - [ ] `sklearn.svm.NuSVC`
   - [ ] `sklearn.neural_network.MLPClassifier`

@@ -8,9 +8,12 @@ from sklearn.discriminant_analysis import (
     QuadraticDiscriminantAnalysis
 )
 from sklearn.ensemble import (
+    BaggingClassifier,
+    AdaBoostClassifier,
     ExtraTreesClassifier,
     RandomForestClassifier,
-    GradientBoostingClassifier
+    GradientBoostingClassifier,
+    HistGradientBoostingClassifier
 )
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.neighbors import (
@@ -75,8 +78,20 @@ MODELS: dict[str, Model] = {
         factory=lambda: RandomForestClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.rfc_widgets(hp_desc)
     ),
+    "Bagging Classifier": Model(
+        factory=lambda: BaggingClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.bc_widgets(hp_desc)
+    ),
+    "AdaBoosting": Model(
+        factory=lambda: AdaBoostClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.abc_widgets(hp_desc)
+    ),
     "Gradient Boosting": Model(
         factory=lambda: GradientBoostingClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.gbc_widgets(hp_desc)
+    ),
+    "Histogram Gradient Boosting": Model(
+        factory=lambda: HistGradientBoostingClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.hgbc_widgets(hp_desc)
     )
 }

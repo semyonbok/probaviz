@@ -864,6 +864,242 @@ def gbc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
+def abc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for n_estimators.
+    hp["n_estimators"] = st.slider(
+        "Number of Estimators",
+        min_value=1,
+        max_value=500,
+        value=50,
+        help=hp_desc["n_estimators"],
+        key="abc_n_estimators",
+    )
+    # Conservative bounds: estimator does not define explicit limits for learning_rate.
+    hp["learning_rate"] = st.number_input(
+        "Learning Rate",
+        min_value=0.01,
+        max_value=10.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["learning_rate"],
+        key="abc_learning_rate",
+    )
+    return hp
+
+
+def bc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for n_estimators.
+    hp["n_estimators"] = st.slider(
+        "Number of Estimators",
+        min_value=1,
+        max_value=500,
+        value=10,
+        help=hp_desc["n_estimators"],
+        key="bc_n_estimators",
+    )
+    # Conservative bounds: max_samples allows (0, 1] fractions.
+    hp["max_samples"] = none_or_widget(
+        "max_samples",
+        widget=st.number_input,
+        min_value=0.1,
+        max_value=1.0,
+        value=1.0,
+        step=0.05,
+        help=hp_desc["max_samples"],
+        key="bc_max_samples",
+        checkbox_kwargs={"key": "bc_max_samples__is_set"},
+    )
+    # Conservative bounds: max_features allows (0, 1] fractions.
+    hp["max_features"] = st.number_input(
+        "Max Features",
+        min_value=0.01,
+        max_value=1.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["max_features"],
+        key="bc_max_features",
+    )
+    hp["bootstrap"] = st.checkbox(
+        "Bootstrap",
+        value=True,
+        help=hp_desc["bootstrap"],
+        key="bc_bootstrap",
+    )
+    hp["bootstrap_features"] = st.checkbox(
+        "Bootstrap Features",
+        value=False,
+        help=hp_desc["bootstrap_features"],
+        key="bc_bootstrap_features",
+    )
+    hp["oob_score"] = st.checkbox(
+        "OOB Score",
+        value=False,
+        help=hp_desc["oob_score"],
+        key="bc_oob_score",
+    )
+    return hp
+
+
+def hgbc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    loss_options = ["log_loss"]
+    hp["loss"] = st.selectbox(
+        "Loss",
+        loss_options,
+        index=loss_options.index("log_loss"),
+        help=hp_desc["loss"],
+        key="hgbc_loss",
+    )
+    hp["learning_rate"] = st.number_input(
+        "Learning Rate",
+        min_value=0.0,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["learning_rate"],
+        key="hgbc_learning_rate",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=1,
+        max_value=1000,
+        value=100,
+        step=10,
+        help=hp_desc["max_iter"],
+        key="hgbc_max_iter",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_leaf_nodes.
+    hp["max_leaf_nodes"] = none_or_widget(
+        "max_leaf_nodes",
+        min_value=2,
+        max_value=255,
+        value=31,
+        help=hp_desc["max_leaf_nodes"],
+        key="hgbc_max_leaf_nodes",
+        checkbox_kwargs={
+            "key": "hgbc_max_leaf_nodes__is_set",
+            "value": True,
+        },
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_depth.
+    hp["max_depth"] = none_or_widget(
+        "max_depth",
+        min_value=1,
+        max_value=50,
+        value=3,
+        help=hp_desc["max_depth"],
+        key="hgbc_max_depth",
+        checkbox_kwargs={"key": "hgbc_max_depth__is_set"},
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_samples_leaf.
+    hp["min_samples_leaf"] = st.slider(
+        "Min Samples Leaf",
+        min_value=1,
+        max_value=200,
+        value=20,
+        help=hp_desc["min_samples_leaf"],
+        key="hgbc_min_samples_leaf",
+    )
+    # Conservative bounds: estimator does not define explicit limits for l2_regularization.
+    hp["l2_regularization"] = st.number_input(
+        "L2 Regularization",
+        min_value=0.0,
+        max_value=10.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["l2_regularization"],
+        key="hgbc_l2_regularization",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_features.
+    hp["max_features"] = st.number_input(
+        "Max Features",
+        min_value=0.01,
+        max_value=1.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["max_features"],
+        key="hgbc_max_features",
+    )
+    hp["max_bins"] = st.slider(
+        "Max Bins",
+        min_value=2,
+        max_value=255,
+        value=255,
+        help=hp_desc["max_bins"],
+        key="hgbc_max_bins",
+    )
+    categorical_features_options = ["from_dtype", None]
+    hp["categorical_features"] = st.selectbox(
+        "Categorical Features",
+        categorical_features_options,
+        index=categorical_features_options.index("from_dtype"),
+        help=hp_desc["categorical_features"],
+        key="hgbc_categorical_features",
+    )
+    interaction_cst_options = [None, "pairwise", "no_interactions"]
+    hp["interaction_cst"] = st.selectbox(
+        "Interaction Constraints",
+        interaction_cst_options,
+        index=interaction_cst_options.index(None),
+        help=hp_desc["interaction_cst"],
+        key="hgbc_interaction_cst",
+    )
+    early_stopping_options = ["auto", True, False]
+    hp["early_stopping"] = st.selectbox(
+        "Early Stopping",
+        early_stopping_options,
+        index=early_stopping_options.index("auto"),
+        help=hp_desc["early_stopping"],
+        key="hgbc_early_stopping",
+    )
+    hp["validation_fraction"] = none_or_widget(
+        "validation_fraction",
+        widget=st.number_input,
+        min_value=0.01,
+        max_value=0.99,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["validation_fraction"],
+        key="hgbc_validation_fraction",
+        checkbox_kwargs={
+            "key": "hgbc_validation_fraction__is_set",
+            "value": True,
+        },
+    )
+    # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
+    hp["n_iter_no_change"] = st.slider(
+        "N Iterations No Change",
+        min_value=1,
+        max_value=200,
+        value=10,
+        step=1,
+        help=hp_desc["n_iter_no_change"],
+        key="hgbc_n_iter_no_change",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0000001,
+        step=0.0000001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="hgbc_tol",
+    )
+    class_weight_options = [None, "balanced"]
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        class_weight_options,
+        index=class_weight_options.index(None),
+        help=hp_desc["class_weight"],
+        key="hgbc_class_weight",
+    )
+    return hp
+
+
 def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     loss_options = [
