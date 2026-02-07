@@ -16,6 +16,7 @@ from sklearn.ensemble import (
     HistGradientBoostingClassifier
 )
 from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import (
     KNeighborsClassifier,
     RadiusNeighborsClassifier,
@@ -41,6 +42,14 @@ MODELS: dict[str, Model] = {
     "SGDClassifier": Model(
         factory=lambda: SGDClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.sgdc_widgets(hp_desc)
+    ),
+    "SVC": Model(
+        factory=lambda: SVC(),
+        widgets=lambda *, hp_desc, **_: wdg.svc_widgets(hp_desc)
+    ),
+    "NuSVC": Model(
+        factory=lambda: NuSVC(),
+        widgets=lambda *, hp_desc, **_: wdg.nsvc_widgets(hp_desc)
     ),
     "Linear Discriminant Analysis": Model(
         factory=lambda: LinearDiscriminantAnalysis(),

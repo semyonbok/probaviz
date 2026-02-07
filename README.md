@@ -48,10 +48,10 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Train/test data split
 
 ### 📈 Metrics & Evaluation
-- [ ] F1 score support
 - [ ] Modify confusion matrix visualization
 - [ ] ROC curves
 - [ ] Precision–Recall curves
+- [ ] Dedicated tab with common classification metrics (perhaps leveraging `skore`)
 
 ### 🎛️ Model & Interaction Features
 - [ ] Reset model button
@@ -73,8 +73,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.ensemble.HistGradientBoostingClassifier`
   - [X] `sklearn.ensemble.AdaBoostClassifier`
   - [X] `sklearn.ensemble.BaggingClassifier`
-  - [ ] `sklearn.svm.SVC`
-  - [ ] `sklearn.svm.NuSVC`
+  - [X] `sklearn.svm.SVC`
+  - [X] `sklearn.svm.NuSVC`
   - [ ] `sklearn.neural_network.MLPClassifier`
   - [ ] `sklearn.gaussian_process.GaussianProcessClassifier`
   - [ ] `sklearn.naive_bayes.GaussianNB`
@@ -105,7 +105,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 ### 🧹 Code Quality & Refactoring
 - [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
 - [ ] Create dedicated `utils.py` module
-- [ ] Improve dataset / config parser
+- [ ] Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
 - [ ] Add dedicated model description definitions
 - [X] Resolve reuse issues when switching datasets (e.g. `None → toy → None`)
 - [ ] Add class attribute `n_unique` (e.g. from `self.train_target`)

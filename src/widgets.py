@@ -276,6 +276,257 @@ def rnc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
+def svc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for C.
+    hp["C"] = st.number_input(
+        "Regularization Parameter (C)",
+        min_value=0.01,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["C"],
+        key="svc_C",
+    )
+    kernel_options = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
+    hp["kernel"] = st.selectbox(
+        "Kernel",
+        kernel_options,
+        index=kernel_options.index("rbf"),
+        help=hp_desc["kernel"],
+        key="svc_kernel",
+    )
+    hp["degree"] = st.slider(
+        "Degree",
+        min_value=0,
+        max_value=10,
+        value=3,
+        step=1,
+        help=hp_desc["degree"],
+        key="svc_degree",
+    )
+    gamma_mode_options = ["scale", "auto", "float"]
+    gamma_mode = st.selectbox(
+        "Gamma Mode",
+        gamma_mode_options,
+        index=gamma_mode_options.index("scale"),
+        help=hp_desc["gamma"],
+        key="svc_gamma_mode",
+    )
+    if gamma_mode == "float":
+        # Conservative bounds: estimator does not define explicit limits for gamma.
+        hp["gamma"] = st.number_input(
+            "Gamma",
+            min_value=0.0,
+            max_value=10.0,
+            value=0.1,
+            step=0.01,
+            help=hp_desc["gamma"],
+            key="svc_gamma",
+        )
+    else:
+        hp["gamma"] = gamma_mode
+    # Conservative bounds: estimator does not define explicit limits for coef0.
+    hp["coef0"] = st.number_input(
+        "Coef0",
+        min_value=-1.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.1,
+        help=hp_desc["coef0"],
+        key="svc_coef0",
+    )
+    hp["shrinking"] = st.checkbox(
+        "Shrinking",
+        value=True,
+        help=hp_desc["shrinking"],
+        key="svc_shrinking",
+    )
+    hp["probability"] = st.checkbox(
+        "Probability Estimates",
+        value=False,
+        help=hp_desc["probability"],
+        key="svc_probability",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="svc_tol",
+    )
+    # Conservative bounds: estimator does not define explicit limits for cache_size.
+    hp["cache_size"] = st.number_input(
+        "Cache Size (MB)",
+        min_value=10.0,
+        max_value=2000.0,
+        value=200.0,
+        step=10.0,
+        help=hp_desc["cache_size"],
+        key="svc_cache_size",
+    )
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        [None, "balanced"],
+        index=0,
+        help=hp_desc["class_weight"],
+        key="svc_class_weight",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=-1,
+        max_value=10000,
+        value=-1,
+        step=1,
+        help=hp_desc["max_iter"],
+        key="svc_max_iter",
+    )
+    hp["decision_function_shape"] = st.selectbox(
+        "Decision Function Shape",
+        ["ovr", "ovo"],
+        index=0,
+        help=hp_desc["decision_function_shape"],
+        key="svc_decision_function_shape",
+    )
+    hp["break_ties"] = st.checkbox(
+        "Break Ties",
+        value=False,
+        help=hp_desc["break_ties"],
+        key="svc_break_ties",
+    )
+    return hp
+
+
+def nsvc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    hp["nu"] = st.number_input(
+        "Nu",
+        min_value=0.01,
+        max_value=1.0,
+        value=0.5,
+        step=0.01,
+        help=hp_desc["nu"],
+        key="nsvc_nu",
+    )
+    kernel_options = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
+    hp["kernel"] = st.selectbox(
+        "Kernel",
+        kernel_options,
+        index=kernel_options.index("rbf"),
+        help=hp_desc["kernel"],
+        key="nsvc_kernel",
+    )
+    hp["degree"] = st.slider(
+        "Degree",
+        min_value=0,
+        max_value=10,
+        value=3,
+        step=1,
+        help=hp_desc["degree"],
+        key="nsvc_degree",
+    )
+    gamma_mode_options = ["scale", "auto", "float"]
+    gamma_mode = st.selectbox(
+        "Gamma Mode",
+        gamma_mode_options,
+        index=gamma_mode_options.index("scale"),
+        help=hp_desc["gamma"],
+        key="nsvc_gamma_mode",
+    )
+    if gamma_mode == "float":
+        # Conservative bounds: estimator does not define explicit limits for gamma.
+        hp["gamma"] = st.number_input(
+            "Gamma",
+            min_value=0.0,
+            max_value=10.0,
+            value=0.1,
+            step=0.01,
+            help=hp_desc["gamma"],
+            key="nsvc_gamma",
+        )
+    else:
+        hp["gamma"] = gamma_mode
+    # Conservative bounds: estimator does not define explicit limits for coef0.
+    hp["coef0"] = st.number_input(
+        "Coef0",
+        min_value=-1.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.1,
+        help=hp_desc["coef0"],
+        key="nsvc_coef0",
+    )
+    hp["shrinking"] = st.checkbox(
+        "Shrinking",
+        value=True,
+        help=hp_desc["shrinking"],
+        key="nsvc_shrinking",
+    )
+    hp["probability"] = st.checkbox(
+        "Probability Estimates",
+        value=False,
+        help=hp_desc["probability"],
+        key="nsvc_probability",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="nsvc_tol",
+    )
+    # Conservative bounds: estimator does not define explicit limits for cache_size.
+    hp["cache_size"] = st.number_input(
+        "Cache Size (MB)",
+        min_value=10.0,
+        max_value=2000.0,
+        value=200.0,
+        step=10.0,
+        help=hp_desc["cache_size"],
+        key="nsvc_cache_size",
+    )
+    hp["class_weight"] = st.selectbox(
+        "Class Weight",
+        [None, "balanced"],
+        index=0,
+        help=hp_desc["class_weight"],
+        key="nsvc_class_weight",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=-1,
+        max_value=10000,
+        value=-1,
+        step=1,
+        help=hp_desc["max_iter"],
+        key="nsvc_max_iter",
+    )
+    hp["decision_function_shape"] = st.selectbox(
+        "Decision Function Shape",
+        ["ovr", "ovo"],
+        index=0,
+        help=hp_desc["decision_function_shape"],
+        key="nsvc_decision_function_shape",
+    )
+    hp["break_ties"] = st.checkbox(
+        "Break Ties",
+        value=False,
+        help=hp_desc["break_ties"],
+        key="nsvc_break_ties",
+    )
+    return hp
+
+
 def dtc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     hp["criterion"] = st.selectbox(

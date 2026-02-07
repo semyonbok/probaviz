@@ -21,14 +21,10 @@ def process_toy(set_name):
         data_set = load_wine(as_frame=True)
     elif set_name == "Iris":
         data_set = load_iris(as_frame=True)
-    target_names_map = {
-        k: v
-        for k, v in zip(
-            range(data_set["target"].nunique()), data_set["target_names"]
-        )
-    }
-    data_set["target"] = data_set["target"].map(target_names_map)
-    return data_set["data"], data_set["target"]
+
+    target_names_map = {k: v for k, v in enumerate(data_set["target_names"])}
+
+    return data_set["data"], data_set["target"].map(target_names_map)
 
 
 # parsers
@@ -168,7 +164,7 @@ else:
     except AttributeError:
         st.error(
             "❌ **This model configuration cannot predict probability scores.** "
-            "Try changing hyper-parameters (e.g., Loss or Metric) "
-            "or refer to documentation."
+            "Try changing hyper-parameters (e.g., Loss, Metric or Probability "
+            "Estimates for support vector machines) or refer to documentation."
         )
         st.stop()
