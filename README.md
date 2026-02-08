@@ -48,7 +48,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Train/test data split
 
 ### 📈 Metrics & Evaluation
-- [ ] Modify confusion matrix visualization
+- [X] Modify confusion/error matrix visualization
 - [ ] ROC curves
 - [ ] Precision–Recall curves
 - [ ] Dedicated tab with common classification metrics (perhaps leveraging `skore`)

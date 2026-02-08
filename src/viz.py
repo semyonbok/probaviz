@@ -265,7 +265,7 @@ class ProbaViz():
                     cs1 = axes.contour(
                         cs0, levels=levels[::4], colors=current_icolor
                     )
-                    axes.clabel(cs1, levels[::4], inline=True,)
+                    axes.clabel(cs1, levels[::4], inline=True, fontsize=self.FS)
 
             # data points and legend
             axes.scatter(
@@ -309,20 +309,20 @@ class ProbaViz():
         self.plot(contour_on=contour_on)
 
     def plot_confusion_matrices(
-            self, return_fig: bool = False, fig_size: Tuple[int, int] = (12, 6)
+            self, return_fig: bool = False, fig_size: Tuple[int, int] = (16, 9)
     ):
         """
-        Plots two confusion matrices: one showing raw counts and the other
-        showing row-normalized values (i.e., normalized by true class).
-        The confusion matrices provide insights into the performance of the
-        supervised ML model.
+        Plots three confusion matrices: the left one shows raw counts, the
+        middle one shows row-normalized values (i.e., normalized by true class)
+        and the right one shows column-normalized values (i.e., normalized by
+        predictions).
 
         Parameters
         ----------
         return_fig : bool, optional
             If `True`, returns a `matplotlib.figure.Figure` instance; if
             `False`, returns `None`; the default is `False`.
-        fig_size : tuple of int, optional, default=(12, 6)
+        fig_size : tuple of int, optional, default=(16, 9)
             A tuple specifying the width and height of the figure in inches.
 
         Returns
@@ -330,38 +330,64 @@ class ProbaViz():
         fig : matplotlib.figure.Figure or None
             The generated figure if `return_fig` is `True`; otherwise `None`.
         """
-        with plt.rc_context({'font.size': self.FS}):
-            fig, axes = plt.subplots(1, 2, figsize=fig_size, tight_layout=True)
+        # TODO prevent from plotting if model is `None`
+        predictions = self.model.predict(self.train_data.values)
 
-            axes[0].set_title("Confusion Matrix (CM)")
-            ConfusionMatrixDisplay.from_estimator(
-                self.model, self.train_data.values, self.train_target,
+        with plt.rc_context({'font.size': self.FS}):
+            fig, axes = plt.subplots(
+                1, 3, figsize=fig_size, tight_layout=True, sharey=True
+            )
+
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
                 display_labels=self.classes,
+                xticks_rotation="vertical",
                 normalize=None,
+                colorbar=False,
                 cmap="Greys",
                 ax=axes[0]
             )
+            axes[0].set_title("Raw Counts")
 
-            axes[1].set_title("CM normalized by row")
-            ConfusionMatrixDisplay.from_estimator(
-                self.model, self.train_data.values, self.train_target,
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
                 display_labels=self.classes,
+                xticks_rotation="vertical",
                 normalize="true",
+                colorbar=False,
                 cmap="Greys",
                 ax=axes[1],
                 values_format=".0%",
                 im_kw={"vmin": 0, "vmax": 1}
             )
+            axes[1].set_title("Normalized by Row")
+            axes[1].set_ylabel(None)
+
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
+                display_labels=self.classes,
+                xticks_rotation="vertical",
+                normalize="pred",
+                colorbar=False,
+                cmap="Greys",
+                ax=axes[2],
+                values_format=".0%",
+                im_kw={"vmin": 0, "vmax": 1}
+            )
+            axes[2].set_title("Normalized by Column")
+            axes[2].set_ylabel(None)
+
         if return_fig:
             return fig
 
     def plot_error_matrices(
-            self, return_fig: bool = False, fig_size: Tuple[int, int] = (12, 6)
+            self, return_fig: bool = False, fig_size: Tuple[int, int] = (16, 9)
     ):
         """
-        Plots two error matrices: one normalized by predicted values (columns)
-        and another normalized by true class (rows). These matrices highlight
-        the distribution of prediction errors made by the supervised ML model,
+        Plots three error matrices: the left one shows raw counts, the middle
+        one is normalized by true class (rows) and the right one is normalized
+        by predicted values (columns). These matrices highlight the
+        distribution of prediction errors made by the supervised ML model,
         helping to identify where the model struggles the most.
 
         Parameters
@@ -369,7 +395,7 @@ class ProbaViz():
         return_fig : bool, optional
             If `True`, returns a `matplotlib.figure.Figure` instance; if
             `False`, returns `None`; the default is `False`.
-        fig_size : tuple of int, optional, default=(12, 6)
+        fig_size : tuple of int, optional, default=(16, 9)
             A tuple specifying the width and height of the figure in inches.
 
         Returns
@@ -377,33 +403,56 @@ class ProbaViz():
         fig : matplotlib.figure.Figure or None
             The generated figure if `return_fig` is `True`; otherwise `None`.
         """
-        sw = self.model.predict(self.train_data.values) != self.train_target
-        with plt.rc_context({'font.size': self.FS}):
-            fig, axes = plt.subplots(1, 2, figsize=fig_size, tight_layout=True)
+        # TODO prevent from plotting if model is `None`
+        predictions = self.model.predict(self.train_data.values)
+        sw = predictions != self.train_target
 
-            axes[0].set_title("Errors normalized by column")
-            ConfusionMatrixDisplay.from_estimator(
-                self.model, self.train_data.values, self.train_target,
-                display_labels=self.classes,
-                sample_weight=sw,
-                normalize="pred",
-                cmap="Reds",
-                ax=axes[0],
-                values_format=".0%",
-                im_kw={"vmin": 0, "vmax": 1}
+        with plt.rc_context({'font.size': self.FS}):
+            fig, axes = plt.subplots(
+                1, 3, figsize=fig_size, tight_layout=True, sharey=True
             )
 
-            axes[1].set_title("Errors normalized by row")
-            ConfusionMatrixDisplay.from_estimator(
-                self.model, self.train_data.values, self.train_target,
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
                 display_labels=self.classes,
+                xticks_rotation="vertical",
+                sample_weight=sw,
+                normalize=None,
+                colorbar=False,
+                cmap="Reds",
+                ax=axes[0],
+            )
+            axes[0].set_title("Raw Counts")
+
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
+                display_labels=self.classes,
+                xticks_rotation="vertical",
                 sample_weight=sw,
                 normalize="true",
+                colorbar=False,
                 cmap="Reds",
                 ax=axes[1],
                 values_format=".0%",
                 im_kw={"vmin": 0, "vmax": 1}
             )
+            axes[1].set_title("Normalized by Row")
+            axes[1].set_ylabel(None)
+
+            ConfusionMatrixDisplay.from_predictions(
+                self.train_target, predictions,
+                display_labels=self.classes,
+                xticks_rotation="vertical",
+                sample_weight=sw,
+                normalize="pred",
+                colorbar=False,
+                cmap="Reds",
+                ax=axes[2],
+                values_format=".0%",
+                im_kw={"vmin": 0, "vmax": 1}
+            )
+            axes[2].set_title("Normalized by Column")
+            axes[2].set_ylabel(None)
 
         if return_fig:
             return fig
