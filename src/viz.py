@@ -159,7 +159,7 @@ class ProbaViz():
         for feature in train_data.columns:
             assert (
                 pd.api.types.is_numeric_dtype(train_data[feature])
-                and not pd.api.types.is_bool_dtype(train_data[feature])
+                and not pd.api.types.is_bool_dtype(train_data[feature])  # noqa
             ), self._asserts["a4"].format(feature)
 
         # define new entries for contour, ensure all data points will be seen
@@ -223,12 +223,11 @@ class ProbaViz():
         cmap_cycle = cycle(self._cmap_colors)
         m_color_cycle = cycle(self._m_colors)
         m_style_cycle = cycle(self._m_styles)
-        full_data = self.train_data.assign(class_=self.train_target)
 
         # fit model, get predictions and train score
         if contour_on:
             pred_proba = self.model.predict_proba(self._mesh_entries)
-            pred_class = self.model.predict(self._mesh_entries)
+            pred_class = np.argmax(pred_proba, axis=1)
             train_score = self.model.score(
                 self.train_data.values, self.train_target
             )
@@ -241,12 +240,13 @@ class ProbaViz():
             )
 
         # iteratively plot contours and data points for every class
-        for index, class_ in enumerate(self.classes):
+        for index, _ in enumerate(self.classes):
             if contour_on:
-                class_proba = np.where(
-                    (pred_class == class_), pred_proba[:, index], np.nan
-                )
+                levels = np.arange(0., 1.05, 0.05)
                 current_cmap = next(cmap_cycle)
+                class_proba = np.where(
+                    pred_class == index, pred_proba[:, index], np.nan
+                )
 
                 if ~np.isnan(class_proba).all():  # skip contour if no class
                     # main filled contour
@@ -254,7 +254,7 @@ class ProbaViz():
                         self._coord_dict["x"], self._coord_dict["y"],
                         class_proba.reshape(self._coord_dict["x"].shape),
                         cmap=current_cmap, alpha=1, vmin=0, vmax=1,
-                        levels=np.arange(0., 1.05, 0.05)
+                        levels=levels
                     )
 
                     # isolines
@@ -263,16 +263,16 @@ class ProbaViz():
                     else:
                         current_icolor = "k"
                     cs1 = axes.contour(
-                        cs0, levels=cs0.levels[::-4], colors=current_icolor
+                        cs0, levels=levels[::4], colors=current_icolor
                     )
-                    axes.clabel(cs1, cs1.levels, inline=True,)
+                    axes.clabel(cs1, levels[::4], inline=True,)
 
             # data points and legend
             axes.scatter(
-                full_data.columns[0], full_data.columns[1],
-                data=full_data.loc[full_data.class_ == class_],
+                self.train_data.columns[0], self.train_data.columns[1],
+                data=self.train_data.loc[self.train_target == self.classes[index]],
                 c=next(m_color_cycle), marker=next(m_style_cycle),
-                edgecolor="k", zorder=2, label=class_
+                edgecolor="k", zorder=2, label=self.classes[index]
             )
 
         axes.legend(

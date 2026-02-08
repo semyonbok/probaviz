@@ -84,7 +84,6 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [ ] `sklearn.naive_bayes.CategoricalNB`
   - [ ] `sklearn.semi_supervised.LabelPropagation`
   - [ ] `sklearn.semi_supervised.LabelSpreading`
-
 - [ ] Add meta ensemble models (voting, stacking, etc.)
 - [ ] Add feature pre-processing
 
@@ -97,7 +96,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [X] Standardize widget generation patterns (model registry?)
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
-- [ ] Skip probability surface plotting for `SGDClassifier` to enable all loss functions
+- [ ] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
 
 ### 🧠 GenAI Component
 - [ ] LLM component reacting to user's most recent change (explain what changed / why)
