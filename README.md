@@ -75,7 +75,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.ensemble.BaggingClassifier`
   - [X] `sklearn.svm.SVC`
   - [X] `sklearn.svm.NuSVC`
-  - [ ] `sklearn.neural_network.MLPClassifier`
+  - [X] `sklearn.neural_network.MLPClassifier`
   - [ ] `sklearn.gaussian_process.GaussianProcessClassifier`
   - [ ] `sklearn.naive_bayes.GaussianNB`
   - [ ] `sklearn.naive_bayes.BernoulliNB`

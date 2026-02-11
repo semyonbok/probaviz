@@ -22,6 +22,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     NearestCentroid
 )
+from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
 
 import src.widgets as wdg
@@ -39,7 +40,7 @@ MODELS: dict[str, Model] = {
         factory=lambda: LogisticRegression(),
         widgets=lambda *, hp_desc, **_: wdg.lr_widgets(hp_desc)
     ),
-    "SGDClassifier": Model(
+    "Stochastic Gradient Descent": Model(
         factory=lambda: SGDClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.sgdc_widgets(hp_desc)
     ),
@@ -63,7 +64,7 @@ MODELS: dict[str, Model] = {
         factory=lambda: KNeighborsClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.knc_widgets(hp_desc)
     ),
-    "Radius Neighbors Classifier": Model(
+    "Radius Neighbors": Model(
         factory=lambda: RadiusNeighborsClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.rnc_widgets(hp_desc)
     ),
@@ -75,11 +76,11 @@ MODELS: dict[str, Model] = {
         factory=lambda: DecisionTreeClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.dtc_widgets(hp_desc)
     ),
-    "Extra Tree Classifier": Model(
+    "Extra Tree": Model(
         factory=lambda: ExtraTreeClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.etc_widgets(hp_desc)
     ),
-    "Extra Trees Classifier": Model(
+    "Extra Trees": Model(
         factory=lambda: ExtraTreesClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.etsc_widgets(hp_desc)
     ),
@@ -87,7 +88,7 @@ MODELS: dict[str, Model] = {
         factory=lambda: RandomForestClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.rfc_widgets(hp_desc)
     ),
-    "Bagging Classifier": Model(
+    "Bagging": Model(
         factory=lambda: BaggingClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.bc_widgets(hp_desc)
     ),
@@ -102,5 +103,9 @@ MODELS: dict[str, Model] = {
     "Histogram Gradient Boosting": Model(
         factory=lambda: HistGradientBoostingClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.hgbc_widgets(hp_desc)
+    ),
+    "Multi-layer Perceptron": Model(
+        factory=lambda: MLPClassifier(),
+        widgets=lambda *, hp_desc, **_: wdg.mlpc_widgets(hp_desc)
     )
 }

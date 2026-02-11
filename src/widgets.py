@@ -36,16 +36,6 @@ def none_or_widget(
 
 def lr_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
-
-    penalty_options = ["l1", "l2", "elasticnet", None]
-    penalty_default = "l2"
-    hp["penalty"] = st.selectbox(
-        "Penalty",
-        penalty_options,
-        index=penalty_options.index(penalty_default),
-        help=hp_desc["penalty"],
-        key="lr_penalty",
-    )
     # Conservative bounds: estimator does not define explicit limits for C.
     hp["C"] = st.number_input(
         "Inverse of Regularization Strength (C)",
@@ -1507,6 +1497,240 @@ def sgdc_widgets(hp_desc: dict[str, str]) -> dict:
         value=False,
         help=hp_desc["average"],
         key="sgdc_average",
+    )
+    return hp
+
+
+def mlpc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for units.
+    hl_mode_options = [
+        "Single Layer",
+        "Two Layers",
+        "Three Layers",
+        "Four Layers",
+    ]
+    hl_mode = st.selectbox(
+        "Hidden Layer Shape",
+        hl_mode_options,
+        index=hl_mode_options.index("Single Layer"),
+        help=hp_desc["hidden_layer_sizes"],
+        key="mlpc_hidden_layer_sizes_mode",
+    )
+    layer_1 = st.slider(
+        "Layer 1 Units",
+        min_value=1,
+        max_value=512,
+        value=100,
+        step=1,
+        help="int, default=100 Number of neurons in the first layer",
+        key="mlpc_hidden_layer_sizes_l1",
+    )
+    layer_2 = st.slider(
+        "Layer 2 Units",
+        min_value=1,
+        max_value=512,
+        value=50,
+        step=1,
+        help="int Number of neurons in the second layer",
+        key="mlpc_hidden_layer_sizes_l2",
+        disabled=hl_mode_options.index(hl_mode) < 1
+    )
+    layer_3 = st.slider(
+        "Layer 3 Units",
+        min_value=1,
+        max_value=512,
+        value=25,
+        step=1,
+        help="int Number of neurons in the third layer",
+        key="mlpc_hidden_layer_sizes_l3",
+        disabled=hl_mode_options.index(hl_mode) < 2
+    )
+    layer_4 = st.slider(
+        "Layer 4 Units",
+        min_value=1,
+        max_value=512,
+        value=16,
+        step=1,
+        help="int Number of neurons in the fourth layer",
+        key="mlpc_hidden_layer_sizes_l4",
+        disabled=hl_mode_options.index(hl_mode) < 3
+    )
+    if hl_mode == "Single Layer":
+        hp["hidden_layer_sizes"] = (layer_1,)
+    elif hl_mode == "Two Layers":
+        hp["hidden_layer_sizes"] = (layer_1, layer_2)
+    elif hl_mode == "Three Layers":
+        hp["hidden_layer_sizes"] = (layer_1, layer_2, layer_3)
+    else:
+        hp["hidden_layer_sizes"] = (layer_1, layer_2, layer_3, layer_4)
+
+    hp["activation"] = st.selectbox(
+        "Activation",
+        ["identity", "logistic", "tanh", "relu"],
+        index=3,
+        help=hp_desc["activation"],
+        key="mlpc_activation",
+    )
+    hp["solver"] = st.selectbox(
+        "Solver",
+        ["lbfgs", "sgd", "adam"],
+        index=2,
+        help=hp_desc["solver"],
+        key="mlpc_solver",
+    )
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.4g",
+        help=hp_desc["alpha"],
+        key="mlpc_alpha",
+    )
+    batch_size_options = ["auto", 16, 32, 64, 128, 256, 512]
+    hp["batch_size"] = st.selectbox(
+        "Batch Size",
+        batch_size_options,
+        index=batch_size_options.index("auto"),
+        help=hp_desc["batch_size"],
+        key="mlpc_batch_size",
+    )
+    hp["learning_rate"] = st.selectbox(
+        "Learning Rate Schedule",
+        ["constant", "invscaling", "adaptive"],
+        index=0,
+        help=hp_desc["learning_rate"],
+        key="mlpc_learning_rate",
+    )
+    # Conservative bounds: estimator does not define explicit limits for learning_rate_init.
+    hp["learning_rate_init"] = st.number_input(
+        "Learning Rate Init",
+        min_value=0.000001,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.4g",
+        help=hp_desc["learning_rate_init"],
+        key="mlpc_learning_rate_init",
+    )
+    # Conservative bounds: estimator does not define explicit limits for power_t.
+    hp["power_t"] = st.number_input(
+        "Power T",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.05,
+        help=hp_desc["power_t"],
+        key="mlpc_power_t",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=10,
+        max_value=2000,
+        value=200,
+        step=10,
+        help=hp_desc["max_iter"],
+        key="mlpc_max_iter",
+    )
+    hp["shuffle"] = st.checkbox(
+        "Shuffle",
+        value=True,
+        help=hp_desc["shuffle"],
+        key="mlpc_shuffle",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="mlpc_tol",
+    )
+    hp["momentum"] = st.number_input(
+        "Momentum",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.9,
+        step=0.01,
+        help=hp_desc["momentum"],
+        key="mlpc_momentum",
+    )
+    hp["nesterovs_momentum"] = st.checkbox(
+        "Nesterovs Momentum",
+        value=True,
+        help=hp_desc["nesterovs_momentum"],
+        key="mlpc_nesterovs_momentum",
+    )
+    hp["early_stopping"] = st.checkbox(
+        "Early Stopping",
+        value=False,
+        help=hp_desc["early_stopping"],
+        key="mlpc_early_stopping",
+    )
+    hp["validation_fraction"] = st.number_input(
+        "Validation Fraction",
+        min_value=0.01,
+        max_value=0.99,
+        value=0.1,
+        step=0.01,
+        help=hp_desc["validation_fraction"],
+        key="mlpc_validation_fraction",
+    )
+    hp["beta_1"] = st.number_input(
+        "Beta 1",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.9,
+        step=0.01,
+        help=hp_desc["beta_1"],
+        key="mlpc_beta_1",
+    )
+    hp["beta_2"] = st.number_input(
+        "Beta 2",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.999,
+        step=0.001,
+        help=hp_desc["beta_2"],
+        key="mlpc_beta_2",
+    )
+    # Conservative bounds: estimator does not define explicit limits for epsilon.
+    hp["epsilon"] = st.number_input(
+        "Epsilon",
+        min_value=0.0,
+        max_value=0.01,
+        value=0.00000001,
+        step=0.00000001,
+        format="%.2e",
+        help=hp_desc["epsilon"],
+        key="mlpc_epsilon",
+    )
+    # Conservative bounds: estimator does not define explicit limits for n_iter_no_change.
+    hp["n_iter_no_change"] = st.slider(
+        "N Iterations No Change",
+        min_value=1,
+        max_value=200,
+        value=10,
+        step=1,
+        help=hp_desc["n_iter_no_change"],
+        key="mlpc_n_iter_no_change",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_fun.
+    hp["max_fun"] = st.slider(
+        "Max Fun",
+        min_value=1000,
+        max_value=50000,
+        value=15000,
+        step=1000,
+        help=hp_desc["max_fun"],
+        key="mlpc_max_fun",
     )
     return hp
 

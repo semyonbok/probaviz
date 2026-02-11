@@ -269,7 +269,7 @@ class ProbaViz():
 
             # data points and legend
             axes.scatter(
-                self.train_data.columns[0], self.train_data.columns[1],
+                self.train_data.columns[0], self.train_data.columns[1], s=100,
                 data=self.train_data.loc[self.train_target == self.classes[index]],
                 c=next(m_color_cycle), marker=next(m_style_cycle),
                 edgecolor="k", zorder=2, label=self.classes[index]
