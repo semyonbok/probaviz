@@ -25,13 +25,13 @@ from sklearn.neighbors import (
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier, ExtraTreeClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
-# from sklearn.naive_bayes import (
-#     GaussianNB,
-#     BernoulliNB,
-#     MultinomialNB,
-#     ComplementNB,
-#     CategoricalNB
-# )
+from sklearn.naive_bayes import (
+    GaussianNB,
+    BernoulliNB,
+    MultinomialNB,
+    ComplementNB,
+    CategoricalNB
+)
 # from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 import src.widgets as wdg
@@ -80,6 +80,26 @@ MODELS: dict[str, Model] = {
     "Nearest Centroid": Model(
         factory=lambda: NearestCentroid(),
         widgets=lambda *, hp_desc, **_: wdg.nc_widgets(hp_desc)
+    ),
+    "Gaussian Naive Bayes": Model(
+        factory=lambda: GaussianNB(),
+        widgets=lambda *, hp_desc, **_: wdg.gnb_widgets(hp_desc)
+    ),
+    "Bernoulli Naive Bayes": Model(
+        factory=lambda: BernoulliNB(),
+        widgets=lambda *, hp_desc, **_: wdg.bnb_widgets(hp_desc)
+    ),
+    "Multinomial Naive Bayes": Model(
+        factory=lambda: MultinomialNB(),
+        widgets=lambda *, hp_desc, **_: wdg.mnb_widgets(hp_desc)
+    ),
+    "Complement Naive Bayes": Model(
+        factory=lambda: ComplementNB(),
+        widgets=lambda *, hp_desc, **_: wdg.cnb_widgets(hp_desc)
+    ),
+    "Categorical Naive Bayes": Model(
+        factory=lambda: CategoricalNB(),
+        widgets=lambda *, hp_desc, **_: wdg.catnb_widgets(hp_desc)
     ),
     "Decision Tree": Model(
         factory=lambda: DecisionTreeClassifier(),

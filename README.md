@@ -1,8 +1,8 @@
 # ProbaViz
 
-**Probaviz** is a Streamlit app for interactive visualization of class probabilities and decision boundaries of 2D classifiers (primarily from scikit-learn).
+**Probaviz** is a Streamlit app for interactive visualization of class probability scores and decision boundaries of 2D classifiers (primarily from scikit-learn).
 
-The project is inspired by the many visual examples in the [scikit-learn gallery](https://scikit-learn.org/stable/auto_examples/index.html) and by the decision boundary helper utilities presented in a [scikit-learn MOOC](https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/). While most existing examples focus on binary classification, Probaviz extends these ideas to **multiclass settings**, enabling visualization of predicted class probabilities for datasets with more than two classes.
+The project is inspired by the many visual examples in the [scikit-learn gallery](https://scikit-learn.org/stable/auto_examples/index.html) and by the decision boundary helper utilities presented in a [scikit-learn MOOC](https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/). While most existing examples focus on binary classification, Probaviz extends these ideas to **multiclass settings**, enabling visualization of predicted class probability scores for datasets with more than two classes.
 
 The figures below illustrate a synthetic dataset with four classes. The probability contours are produced using classifiers such as `sklearn.neighbors.KNeighborsClassifier` and `sklearn.ensemble.RandomForestClassifier`, trained on two numerical features. Beyond static plots, the underlying visualization logic is designed to support interactivity, allowing users to explore how model hyperparameters affect decision boundaries in real time.
 
@@ -77,17 +77,18 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.svm.NuSVC`
   - [X] `sklearn.neural_network.MLPClassifier`
   - [X] `sklearn.gaussian_process.GaussianProcessClassifier`
-  - [ ] `sklearn.naive_bayes.GaussianNB`
-  - [ ] `sklearn.naive_bayes.BernoulliNB`
-  - [ ] `sklearn.naive_bayes.MultinomialNB`
-  - [ ] `sklearn.naive_bayes.ComplementNB`
-  - [ ] `sklearn.naive_bayes.CategoricalNB`
+  - [X] `sklearn.naive_bayes.GaussianNB`
+  - [X] `sklearn.naive_bayes.BernoulliNB`
+  - [X] `sklearn.naive_bayes.MultinomialNB`
+  - [X] `sklearn.naive_bayes.ComplementNB`
+  - [X] `sklearn.naive_bayes.CategoricalNB`
   - [ ] `sklearn.semi_supervised.LabelPropagation`
   - [ ] `sklearn.semi_supervised.LabelSpreading`
 - [ ] Allow kernel customization for `GaussianProcessClassifier` 
 - [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
 - [ ] Add meta ensemble models (voting, stacking, etc.)
 - [ ] Add feature pre-processing
+- [ ] Add classifiers from other frameworks
 
 ### 🧩 UI / UX Improvements
 - [ ] Migrate to a more interactive plotting framework like `plotly` 
@@ -101,6 +102,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
 - [ ] Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
 - [ ] Add dedicated model description definitions
+- [ ] Balloons when 100% accuracy reached? Maybe a nice touch, but reinforces over-fitting on training data
 
 ### 🧠 GenAI Component
 - [ ] LLM component reacting to user's most recent change (explain what changed / why)

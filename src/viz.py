@@ -57,11 +57,11 @@ class ProbaViz():
         supervised ML model and calls plot method.
         **Warning:** changes hyperparameters of the set model.
     plot_confusion_matrices()
-        Plots two confusion matrices: one showing raw counts and the other
-        showing row-normalized values
+        Plots three confusion matrices: left showing raw counts, middle showing
+        row-normalized values and right showing column-normalized values
     plot_error_matrices()
-        Plots two error matrices: one normalized by predicted values (columns)
-        and another normalized by true class (rows)
+        Plots three error matrices: left showing raw counts, middle showing
+        row-normalized values and right showing column-normalized values
     """
     FS = 22  # "xx-large"
 
@@ -263,9 +263,9 @@ class ProbaViz():
                     else:
                         current_icolor = "k"
                     cs1 = axes.contour(
-                        cs0, levels=levels[::4], colors=current_icolor
+                        cs0, levels=levels[::3], colors=current_icolor
                     )
-                    axes.clabel(cs1, levels[::4], inline=True, fontsize=self.FS)
+                    axes.clabel(cs1, levels[::3], inline=True, fontsize=self.FS)
 
             # data points and legend
             axes.scatter(

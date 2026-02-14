@@ -216,6 +216,159 @@ def nc_widgets(hp_desc: dict[str, str]) -> dict:
     return hp
 
 
+def gnb_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for var_smoothing.
+    hp["var_smoothing"] = st.number_input(
+        "Var Smoothing",
+        min_value=0.0,
+        max_value=1.0,
+        value=1e-9,
+        step=1e-9,
+        format="%.2e",
+        help=hp_desc["var_smoothing"],
+        key="gnb_var_smoothing",
+    )
+    return hp
+
+
+def bnb_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["alpha"],
+        key="bnb_alpha",
+    )
+    hp["force_alpha"] = st.checkbox(
+        "Force Alpha",
+        value=True,
+        help=hp_desc["force_alpha"],
+        key="bnb_force_alpha",
+    )
+    # Conservative bounds: estimator does not define explicit limits for binarize.
+    hp["binarize"] = none_or_widget(
+        "binarize",
+        widget=st.number_input,
+        min_value=0.,
+        max_value=10.0,
+        value=0.0,
+        step=0.01,
+        help=hp_desc["binarize"],
+        key="bnb_binarize",
+        checkbox_kwargs={"key": "bnb_binarize__is_set", "value": True},
+    )
+    hp["fit_prior"] = st.checkbox(
+        "Fit Prior",
+        value=True,
+        help=hp_desc["fit_prior"],
+        key="bnb_fit_prior",
+    )
+    return hp
+
+
+def mnb_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["alpha"],
+        key="mnb_alpha",
+    )
+    hp["force_alpha"] = st.checkbox(
+        "Force Alpha",
+        value=True,
+        help=hp_desc["force_alpha"],
+        key="mnb_force_alpha",
+    )
+    hp["fit_prior"] = st.checkbox(
+        "Fit Prior",
+        value=True,
+        help=hp_desc["fit_prior"],
+        key="mnb_fit_prior",
+    )
+    return hp
+
+
+def cnb_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["alpha"],
+        key="cnb_alpha",
+    )
+    hp["force_alpha"] = st.checkbox(
+        "Force Alpha",
+        value=True,
+        help=hp_desc["force_alpha"],
+        key="cnb_force_alpha",
+    )
+    hp["fit_prior"] = st.checkbox(
+        "Fit Prior",
+        value=True,
+        help=hp_desc["fit_prior"],
+        key="cnb_fit_prior",
+    )
+    hp["norm"] = st.checkbox(
+        "Norm",
+        value=False,
+        help=hp_desc["norm"],
+        key="cnb_norm",
+    )
+    return hp
+
+
+def catnb_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    # Conservative bounds: estimator does not define explicit limits for alpha.
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=100.0,
+        value=1.0,
+        step=0.01,
+        help=hp_desc["alpha"],
+        key="catnb_alpha",
+    )
+    hp["force_alpha"] = st.checkbox(
+        "Force Alpha",
+        value=True,
+        help=hp_desc["force_alpha"],
+        key="catnb_force_alpha",
+    )
+    hp["fit_prior"] = st.checkbox(
+        "Fit Prior",
+        value=True,
+        help=hp_desc["fit_prior"],
+        key="catnb_fit_prior",
+    )
+    # Conservative bounds: estimator does not define explicit limits for min_categories.
+    hp["min_categories"] = none_or_widget(
+        "min_categories",
+        min_value=1,
+        max_value=100,
+        value=2,
+        step=1,
+        help=hp_desc["min_categories"],
+        key="catnb_min_categories",
+        checkbox_kwargs={"key": "catnb_min_categories__is_set"},
+    )
+    return hp
+
+
 def rnc_widgets(hp_desc: dict[str, str]) -> dict:
     hp: dict[str, Any] = {}
     # Conservative bounds: estimator does not define explicit limits for radius.
