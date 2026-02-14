@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Optional, TypeVar
+
 import streamlit as st
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel, DotProduct, ExpSineSquared, Matern, PairwiseKernel,
+    RBF, RationalQuadratic, WhiteKernel
+)
+
 T = TypeVar("T")
 
 
@@ -513,6 +519,73 @@ def nsvc_widgets(hp_desc: dict[str, str]) -> dict:
         value=False,
         help=hp_desc["break_ties"],
         key="nsvc_break_ties",
+    )
+    return hp
+
+
+def gpc_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    kernel_options = {
+        "None": None,
+        "Constant Kernel": ConstantKernel(),
+        "Dot Product": DotProduct(),
+        "Exp-Sine-Squared": ExpSineSquared(),
+        "Matern": Matern(),
+        "RBF": RBF(),
+        "Pairwise": PairwiseKernel(),
+        "Rational Quadratic": RationalQuadratic(),
+        "White Kernel": WhiteKernel(),
+    }
+    hp["kernel"] = kernel_options[
+        st.selectbox(
+            "Kernel",
+            kernel_options.keys(),
+            index=list(kernel_options).index("None"),
+            help=hp_desc["kernel"],
+            key="gpc_kernel",
+        )
+    ]
+    optimizer_options = ["fmin_l_bfgs_b", None]
+    hp["optimizer"] = st.selectbox(
+        "Optimizer",
+        optimizer_options,
+        index=optimizer_options.index("fmin_l_bfgs_b"),
+        help=hp_desc["optimizer"],
+        key="gpc_optimizer",
+    )
+    # Conservative bounds: estimator does not define explicit limits for n_restarts_optimizer.
+    hp["n_restarts_optimizer"] = st.slider(
+        "N Restarts Optimizer",
+        min_value=0,
+        max_value=20,
+        value=0,
+        step=1,
+        help=hp_desc["n_restarts_optimizer"],
+        key="gpc_n_restarts_optimizer",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter_predict.
+    hp["max_iter_predict"] = st.slider(
+        "Max Iterations Predict",
+        min_value=1,
+        max_value=1000,
+        value=100,
+        step=1,
+        help=hp_desc["max_iter_predict"],
+        key="gpc_max_iter_predict",
+    )
+    hp["copy_X_train"] = st.checkbox(
+        "Copy X Train",
+        value=True,
+        help=hp_desc["copy_X_train"],
+        key="gpc_copy_X_train",
+    )
+    multi_class_options = ["one_vs_rest", "one_vs_one"]
+    hp["multi_class"] = st.selectbox(
+        "Multi Class",
+        multi_class_options,
+        index=multi_class_options.index("one_vs_rest"),
+        help=hp_desc["multi_class"],
+        key="gpc_multi_class",
     )
     return hp
 

@@ -30,7 +30,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 ---
 
 ## 🏗️ Ongoing Work
-### Project Setup & Structure
+### 🧱 Project Setup & Structure
 - [X] Update repo README file
 - [ ] Finalize and clean `requirements.txt`
 - [ ] Publish app on Streamlit Community Cloud
@@ -76,7 +76,7 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.svm.SVC`
   - [X] `sklearn.svm.NuSVC`
   - [X] `sklearn.neural_network.MLPClassifier`
-  - [ ] `sklearn.gaussian_process.GaussianProcessClassifier`
+  - [X] `sklearn.gaussian_process.GaussianProcessClassifier`
   - [ ] `sklearn.naive_bayes.GaussianNB`
   - [ ] `sklearn.naive_bayes.BernoulliNB`
   - [ ] `sklearn.naive_bayes.MultinomialNB`
@@ -84,6 +84,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [ ] `sklearn.naive_bayes.CategoricalNB`
   - [ ] `sklearn.semi_supervised.LabelPropagation`
   - [ ] `sklearn.semi_supervised.LabelSpreading`
+- [ ] Allow kernel customization for `GaussianProcessClassifier` 
+- [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
 - [ ] Add meta ensemble models (voting, stacking, etc.)
 - [ ] Add feature pre-processing
 
@@ -97,6 +99,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
 - [ ] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
+- [ ] Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
+- [ ] Add dedicated model description definitions
 
 ### 🧠 GenAI Component
 - [ ] LLM component reacting to user's most recent change (explain what changed / why)
@@ -104,8 +108,6 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 ### 🧹 Code Quality & Refactoring
 - [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
 - [ ] Create dedicated `utils.py` module
-- [ ] Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
-- [ ] Add dedicated model description definitions
 - [X] Resolve reuse issues when switching datasets (e.g. `None → toy → None`)
 - [ ] Add class attribute `n_unique` (e.g. from `self.train_target`)
 - [ ] Refactor toward more Pythonic code (properties, clearer APIs)
