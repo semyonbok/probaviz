@@ -32,7 +32,7 @@ from sklearn.naive_bayes import (
     ComplementNB,
     CategoricalNB
 )
-# from sklearn.semi_supervised import LabelPropagation, LabelSpreading
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 import src.widgets as wdg
 
@@ -140,5 +140,13 @@ MODELS: dict[str, Model] = {
     "Gaussian Process": Model(
         factory=lambda: GaussianProcessClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.gpc_widgets(hp_desc)
-    )
+    ),
+    "Label Propagation": Model(
+        factory=lambda: LabelPropagation(),
+        widgets=lambda *, hp_desc, **_: wdg.lp_widgets(hp_desc)
+    ),
+    "Label Spreading": Model(
+        factory=lambda: LabelSpreading(),
+        widgets=lambda *, hp_desc, **_: wdg.ls_widgets(hp_desc)
+    ),
 }

@@ -57,8 +57,9 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
 - [ ] Reset model button
 - [X] Ensure switching model resets widgets
 - [X] Graceful failure in case of invalid hyper-parameter combo
-- [ ] Add all "standalone" scikit-learn classifiers:
+- [X] Add all "standalone" scikit-learn classifiers:
   - [X] `sklearn.linear_model.LogisticRegression`
+  - [ ] `sklearn.linear_model.LogisticRegressionCV`
   - [X] `sklearn.linear_model.SGDClassifier`
   - [X] `sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
   - [X] `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -82,8 +83,8 @@ The figures below illustrate a synthetic dataset with four classes. The probabil
   - [X] `sklearn.naive_bayes.MultinomialNB`
   - [X] `sklearn.naive_bayes.ComplementNB`
   - [X] `sklearn.naive_bayes.CategoricalNB`
-  - [ ] `sklearn.semi_supervised.LabelPropagation`
-  - [ ] `sklearn.semi_supervised.LabelSpreading`
+  - [X] `sklearn.semi_supervised.LabelPropagation`
+  - [X] `sklearn.semi_supervised.LabelSpreading`
 - [ ] Allow kernel customization for `GaussianProcessClassifier` 
 - [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
 - [ ] Add meta ensemble models (voting, stacking, etc.)

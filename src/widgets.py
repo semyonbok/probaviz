@@ -2081,3 +2081,120 @@ def qda_widgets(hp_desc: dict[str, str]) -> dict:
         key="qda_tol",
     )
     return hp
+
+
+def lp_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    kernel_options = ["knn", "rbf"]
+    hp["kernel"] = st.selectbox(
+        "Kernel",
+        kernel_options,
+        index=kernel_options.index("rbf"),
+        help=hp_desc["kernel"],
+        key="lp_kernel",
+    )
+    # Conservative bounds: estimator does not define explicit limits for gamma.
+    hp["gamma"] = st.number_input(
+        "Gamma",
+        min_value=0.0,
+        max_value=100.0,
+        value=20.0,
+        step=0.1,
+        help=hp_desc["gamma"],
+        key="lp_gamma",
+    )
+    # Conservative bounds: n_neighbors must be strictly positive.
+    hp["n_neighbors"] = st.slider(
+        "N Neighbors",
+        min_value=1,
+        max_value=100,
+        value=7,
+        step=1,
+        help=hp_desc["n_neighbors"],
+        key="lp_n_neighbors",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=1,
+        max_value=10000,
+        value=1000,
+        step=1,
+        help=hp_desc["max_iter"],
+        key="lp_max_iter",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="lp_tol",
+    )
+    return hp
+
+
+def ls_widgets(hp_desc: dict[str, str]) -> dict:
+    hp: dict[str, Any] = {}
+    kernel_options = ["knn", "rbf"]
+    hp["kernel"] = st.selectbox(
+        "Kernel",
+        kernel_options,
+        index=kernel_options.index("rbf"),
+        help=hp_desc["kernel"],
+        key="ls_kernel",
+    )
+    # Conservative bounds: estimator does not define explicit limits for gamma.
+    hp["gamma"] = st.number_input(
+        "Gamma",
+        min_value=0.0,
+        max_value=100.0,
+        value=20.0,
+        step=0.1,
+        help=hp_desc["gamma"],
+        key="ls_gamma",
+    )
+    # Conservative bounds: n_neighbors must be strictly positive.
+    hp["n_neighbors"] = st.slider(
+        "N Neighbors",
+        min_value=1,
+        max_value=100,
+        value=7,
+        step=1,
+        help=hp_desc["n_neighbors"],
+        key="ls_n_neighbors",
+    )
+    hp["alpha"] = st.number_input(
+        "Alpha",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.2,
+        step=0.01,
+        help=hp_desc["alpha"],
+        key="ls_alpha",
+    )
+    # Conservative bounds: estimator does not define explicit limits for max_iter.
+    hp["max_iter"] = st.slider(
+        "Max Iterations",
+        min_value=1,
+        max_value=10000,
+        value=30,
+        step=1,
+        help=hp_desc["max_iter"],
+        key="ls_max_iter",
+    )
+    # Conservative bounds: estimator does not define explicit limits for tol.
+    hp["tol"] = st.number_input(
+        "Tolerance",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.001,
+        step=0.0001,
+        format="%.2e",
+        help=hp_desc["tol"],
+        key="ls_tol",
+    )
+    return hp
