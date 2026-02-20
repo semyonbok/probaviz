@@ -1,7 +1,7 @@
 import re
 import streamlit as st
 
-from sklearn.datasets import load_iris, load_wine
+from sklearn.datasets import load_iris, load_wine, load_breast_cancer
 
 from src.viz import ProbaViz
 from src.widgets import none_or_widget
@@ -21,6 +21,8 @@ def process_toy(set_name):
         data_set = load_wine(as_frame=True)
     elif set_name == "Iris":
         data_set = load_iris(as_frame=True)
+    elif set_name == "Cancer":
+        data_set = load_breast_cancer(as_frame=True)
 
     target_names_map = {k: v for k, v in enumerate(data_set["target_names"])}
 
@@ -35,7 +37,7 @@ def parse_param_desc(model):
     params_desc = re.split(params, model.__doc__)[1:]
     params_desc[-1] = params_desc[-1].split("Attributes\n")[0]
     params_desc = {
-        k[:-3]: "\n".join(v.split("\n\n"))
+        k[:-3]: "  \n".join(v.split("\n\n"))
         for k, v in zip(re.findall(params, model.__doc__), params_desc)
     }
     return params_desc
@@ -77,7 +79,7 @@ with st.sidebar:
 
     if st.checkbox("Toy Dataset", True, disabled=True):
         set_name = st.selectbox(
-            "Select a Toy Dataset", [None, "Wine", "Iris"],
+            "Select a Toy Dataset", [None, "Wine", "Iris", "Cancer"],
             on_change=_on_dataset_change, key="set_name"
         )
 
@@ -121,12 +123,14 @@ if set_name is None:
 if "set_and_features" not in st.session_state:
     st.session_state["set_and_features"] = (set_name, f1, f2)
 
-# call `set_data` only when there is change in... data!
+# call `set_dataset` only when there is change in... data!
 if "pv" not in st.session_state:
-    st.session_state["pv"] = ProbaViz(model, data, target, [f1, f2])
+    st.session_state["pv"] = ProbaViz(
+        model=model, train_data=data, train_target=target, features=[f1, f2]
+    )
 elif st.session_state["set_and_features"] != (set_name, f1, f2):
     st.session_state["set_and_features"] = (set_name, f1, f2)
-    st.session_state["pv"].set_data(data, target, [f1, f2])
+    st.session_state["pv"].set_dataset(data, target, [f1, f2])
 
 if model is None:
     st.pyplot(
@@ -136,7 +140,8 @@ if model is None:
     )
 else:
     try:
-        st.session_state["pv"].set_model(model.set_params(**hp))
+        st.session_state["pv"].model = model
+        st.session_state["pv"].update_params(**hp)
 
         tab_contour, tab_conf, tab_err = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices"]
@@ -147,24 +152,33 @@ else:
             )
         )
         tab_conf.pyplot(
-            st.session_state["pv"].plot_confusion_matrices(
+            st.session_state["pv"].plot_matrices(
                 return_fig=True, fig_size=(16, 9)
             )
         )
         tab_err.pyplot(
-            st.session_state["pv"].plot_error_matrices(
-                return_fig=True, fig_size=(16, 9)
+            st.session_state["pv"].plot_matrices(
+                return_fig=True, mode="error", fig_size=(16, 9)
             )
         )
-        with st.expander("Model Info", icon="ℹ️"):
-            st.info(parse_model_desc(model))
-    except (ValueError, NotImplementedError) as e:
-        st.error(f"❌ **Model failed to fit.** {e}")
-        st.stop()
     except AttributeError:
-        st.error(
+        tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
             "Try changing hyper-parameters (e.g., Loss, Metric or Probability "
             "Estimates for support vector machines) or refer to documentation."
         )
-        st.stop()
+        tab_conf.pyplot(
+            st.session_state["pv"].plot_matrices(
+                return_fig=True, fig_size=(16, 9)
+            )
+        )
+        tab_err.pyplot(
+            st.session_state["pv"].plot_matrices(
+                return_fig=True, mode="error", fig_size=(16, 9)
+            )
+        )
+    except (ValueError, NotImplementedError) as e:
+        st.error(f"❌ **Model failed to fit.** {e}")
+    finally:
+        with st.expander("Model Info", icon="ℹ️"):
+            st.info(parse_model_desc(model))

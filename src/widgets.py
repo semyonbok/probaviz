@@ -2169,8 +2169,8 @@ def ls_widgets(hp_desc: dict[str, str]) -> dict:
     )
     hp["alpha"] = st.number_input(
         "Alpha",
-        min_value=0.0,
-        max_value=1.0,
+        min_value=0.001,
+        max_value=0.999,
         value=0.2,
         step=0.01,
         help=hp_desc["alpha"],

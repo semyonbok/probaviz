@@ -53,11 +53,11 @@ MODELS: dict[str, Model] = {
         factory=lambda: SGDClassifier(),
         widgets=lambda *, hp_desc, **_: wdg.sgdc_widgets(hp_desc)
     ),
-    "SVC": Model(
+    "Support Vector": Model(
         factory=lambda: SVC(),
         widgets=lambda *, hp_desc, **_: wdg.svc_widgets(hp_desc)
     ),
-    "NuSVC": Model(
+    "Nu-Support Vector": Model(
         factory=lambda: NuSVC(),
         widgets=lambda *, hp_desc, **_: wdg.nsvc_widgets(hp_desc)
     ),
