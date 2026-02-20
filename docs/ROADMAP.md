@@ -1,7 +1,5 @@
 # ProbaViz
 
----
-
 ## 🏗️ Ongoing Work
 
 ### 🧱 Project Setup & Structure

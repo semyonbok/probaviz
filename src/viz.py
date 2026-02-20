@@ -59,6 +59,12 @@ class ProbaViz:
 
         self._coord_dict: dict[str, np.ndarray] = {}
         self._mesh_entries: np.ndarray = np.empty((0, 2))
+        self._train_xy: np.ndarray = np.empty((0, 2))
+        self._x_values: np.ndarray = np.empty(0)
+        self._y_values: np.ndarray = np.empty(0)
+        self._class_masks: dict[Any, np.ndarray] = {}
+        self._train_predictions: np.ndarray | None = None
+        self._prediction_cache_valid = False
         self._is_dirty = True
         self._is_fitted = False
         self.auto_fit = auto_fit
@@ -147,6 +153,7 @@ class ProbaViz:
     def _mark_dirty(self) -> None:
         self._is_dirty = True
         self._is_fitted = False
+        self._prediction_cache_valid = False
 
     def _validate_dataset_inputs(
         self,
@@ -184,18 +191,17 @@ class ProbaViz:
         return selected
 
     def _build_mesh(self) -> None:
-        data = self.train_data
-        x_offset = np.ptp(data.iloc[:, 0].values) / 100
-        y_offset = np.ptp(data.iloc[:, 1].values) / 100
+        x_offset = np.ptp(self._x_values) / 100
+        y_offset = np.ptp(self._y_values) / 100
 
         x_values = np.linspace(
-            data.iloc[:, 0].min() - x_offset,
-            data.iloc[:, 0].max() + x_offset,
+            self._x_values.min() - x_offset,
+            self._x_values.max() + x_offset,
             self._grid_res[0],
         )
         y_values = np.linspace(
-            data.iloc[:, 1].min() - y_offset,
-            data.iloc[:, 1].max() + y_offset,
+            self._y_values.min() - y_offset,
+            self._y_values.max() + y_offset,
             self._grid_res[1],
         )
 
@@ -243,11 +249,22 @@ class ProbaViz:
 
         self._validate_dataset_inputs(train_data, train_target, active_features, active_grid)
         selected_data = self._select_feature_columns(train_data, active_features)
+        train_target_arr = np.asarray(train_target)
+        train_xy = np.ascontiguousarray(selected_data.to_numpy())
 
         self._train_data = selected_data
-        self._train_target = np.asarray(train_target)
+        self._train_target = train_target_arr
         self._features = selected_data.columns.to_numpy()
-        self._classes = np.unique(self._train_target)
+        self._classes = np.unique(train_target_arr)
+        self._train_xy = train_xy
+        self._x_values = train_xy[:, 0]
+        self._y_values = train_xy[:, 1]
+        self._class_masks = {
+            current_class: train_target_arr == current_class
+            for current_class in self._classes
+        }
+        self._train_predictions = None
+        self._prediction_cache_valid = False
         self._grid_res = active_grid
         self._build_mesh()
         self._mark_dirty()
@@ -269,15 +286,23 @@ class ProbaViz:
         Fit the configured model on the current dataset.
         """
         if self._model is None:
-            raise ValueError(MSG_MODEL_CLASSIFIER)
+            raise ValueError(MSG_MODEL_REQUIRED)
         if self._train_data is None or self._train_target is None:
             raise ValueError(MSG_MISSING_DATA)
         self._ensure_model_compatibility(self._model)
 
         if force or self._is_dirty:
-            self._model.fit(self.train_data.values, self.train_target)
+            self._model.fit(self._train_xy, self.train_target)
+            self._train_predictions = self._model.predict(self._train_xy)
+            self._prediction_cache_valid = True
             self._is_fitted = True
             self._is_dirty = False
+
+    def _get_train_predictions(self) -> np.ndarray:
+        if self._train_predictions is None or not self._prediction_cache_valid:
+            self._train_predictions = self.model.predict(self._train_xy)
+            self._prediction_cache_valid = True
+        return self._train_predictions
 
     def plot(
         self,
@@ -292,8 +317,8 @@ class ProbaViz:
             raise ValueError(MSG_MISSING_DATA)
 
         fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
-        axes.set_xlabel(self.train_data.iloc[:, 0].name, fontsize=self.FS)
-        axes.set_ylabel(self.train_data.iloc[:, 1].name, fontsize=self.FS)
+        axes.set_xlabel(self.train_data.columns[0], fontsize=self.FS)
+        axes.set_ylabel(self.train_data.columns[1], fontsize=self.FS)
 
         cmap_cycle = cycle(CMAP_COLORS)
         m_color_cycle = cycle(MARKER_COLORS)
@@ -307,7 +332,7 @@ class ProbaViz:
             self._ensure_fitted_for_plot(require_predict_proba=True)
             pred_proba = self.model.predict_proba(self._mesh_entries)
             pred_class = np.argmax(pred_proba, axis=1)
-            train_score = self.model.score(self.train_data.values, self.train_target)
+            train_score = self.model.score(self._train_xy, self.train_target)
 
             axes.set_facecolor("k")
             axes.text(
@@ -342,10 +367,9 @@ class ProbaViz:
                     axes.clabel(cs1, levels[::3], inline=True, fontsize=self.FS)
 
             axes.scatter(
-                self.train_data.columns[0],
-                self.train_data.columns[1],
+                self._x_values[self._class_masks[current_class]],
+                self._y_values[self._class_masks[current_class]],
                 s=100,
-                data=self.train_data.loc[self.train_target == current_class],
                 c=next(m_color_cycle),
                 marker=next(m_style_cycle),
                 edgecolor="k",
@@ -390,9 +414,9 @@ class ProbaViz:
         Plot raw and normalized confusion/error matrices.
         """
         self._ensure_fitted_for_plot(require_predict_proba=False)
-        predictions = self.model.predict(self.train_data.values)
+        predictions = self._get_train_predictions()
         if mode == "confusion":
-            sample_weight = np.ones_like(self.train_target)
+            sample_weight = None
             cmap: str = "Greys"
         elif mode == "error":
             sample_weight = predictions != self.train_target
