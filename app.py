@@ -62,22 +62,20 @@ def parse_model_desc(model) -> str:
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
 
-# side bar controls: data, model, plot aesthetics
+# side bar controls: data, model, and hyperparameters
 with st.sidebar:
-    # data (only toy datasets for now)
     st.subheader(
-        "Dataset",
+        "Data",
         help=(
             "Pick a dataset and two of its numerical features (columns) "
-            "that will be used for model training. Currently, only two "
-            "'toy' datasets are available: wine and iris "
-            "(https://scikit-learn.org/stable/datasets/toy_dataset.html)."
+            "that will be used for model training. Currently, three "
+            "['toy' datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) "
+            "are available: wine, iris, and breast cancer."
         )
     )
-    if st.checkbox("Synthetic Dataset", False, disabled=True):
-        pass
 
-    if st.checkbox("Toy Dataset", True, disabled=True):
+    dataset = st.radio("Select a Dataset", ["Toy", "Synthetic"], disabled=True)
+    if dataset == "Toy":
         set_name = st.selectbox(
             "Select a Toy Dataset", [None, "Wine", "Iris", "Cancer"],
             on_change=_on_dataset_change, key="set_name"
@@ -86,21 +84,33 @@ with st.sidebar:
         # once set is chosen, process data and allow to pick features
         if set_name is not None:
             data, target = process_toy(set_name)
-            st.write("Pick Features:")
             f1 = st.selectbox(
-                "X-axis", data.columns, key="f1"
+                "Pick Feature 1 (X-axis)",
+                data.columns, key=f"{set_name}_f1"
             )
             f2 = st.selectbox(
-                "Y-axis", data.columns[data.columns != f1], key="f2"
+                "Pick Feature 2 (Y-axis)",
+                data.columns[data.columns != f1], key=f"{set_name}_f2"
+            )
+            st.caption(
+                f"{data.shape[0]} samples | {data.shape[1]} features | "
+                f"{target.nunique()} classes"
             )
 
-    st.subheader("Classifier")
-    model_pick = st.selectbox("Select a Model", [None, *MODELS.keys()])
+    elif dataset == "Synthetic":
+        pass
+
+    st.divider()
+    st.subheader("Model")
+    model_pick = st.selectbox("Select a Model", [None, *sorted(MODELS.keys())])
     model = MODELS[model_pick].factory() if model_pick else None
+
+    st.divider()
+    st.subheader("Hyper-parameters")
+    hp = {}
 
     # set `random_state` if the model has this parameter
     if (model is not None) and (set_name is not None):
-        hp = {}
         hp_desc = parse_param_desc(model)
         if "random_state" in model.get_params().keys():
             hp["random_state"] = none_or_widget(
@@ -110,6 +120,14 @@ with st.sidebar:
             )
         # model_pick cannot be None under this condition
         hp = {**hp, **MODELS[model_pick].widgets(hp_desc=hp_desc)}  # type: ignore
+    else:
+        st.caption("Select dataset and model to configure hyper-parameters.")
+
+    st.divider()
+    st.subheader("Current Configuration")
+    st.caption(f"Dataset: {set_name or 'None'}")
+    st.caption(f"Features: {f1 if set_name else '-'} vs {f2 if set_name else '-'}")
+    st.caption(f"Model: {model_pick or 'None'}")
 
 # Session State and Plotting Logic
 # If data is None, don't plot anything

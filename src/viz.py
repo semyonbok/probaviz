@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.base import is_classifier
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, f1_score
 
 plt.style.use("seaborn-v0_8-ticks")
 
@@ -302,7 +302,7 @@ class ProbaViz:
         if self._train_predictions is None or not self._prediction_cache_valid:
             self._train_predictions = self.model.predict(self._train_xy)
             self._prediction_cache_valid = True
-        return self._train_predictions
+        return self._train_predictions  # type: ignore
 
     def plot(
         self,
@@ -332,14 +332,20 @@ class ProbaViz:
             self._ensure_fitted_for_plot(require_predict_proba=True)
             pred_proba = self.model.predict_proba(self._mesh_entries)
             pred_class = np.argmax(pred_proba, axis=1)
-            train_score = self.model.score(self._train_xy, self.train_target)
+            train_acc = accuracy_score(
+                self._train_target, self._get_train_predictions())
+            train_f1 = f1_score(
+                self._train_target, self._get_train_predictions(), average="weighted")
 
             axes.set_facecolor("k")
             axes.text(
                 1.04,
-                0.05,
-                f"Train\nScore:\n{100 * train_score:.2f}%",
-                verticalalignment="center",
+                0.0,
+                (
+                    f"Train Acc:\n{train_acc:.2%}\n\n"
+                    f"Train F1\n(Weighted):\n{train_f1:.2%}"
+                ),
+                verticalalignment="bottom",
                 horizontalalignment="left",
                 transform=axes.transAxes,
                 fontsize=self.FS,
@@ -378,8 +384,8 @@ class ProbaViz:
             )
 
         axes.legend(
-            loc="center left",
-            bbox_to_anchor=(1.04, 0.5),
+            loc="upper left",
+            bbox_to_anchor=(1.04, 1.0),
             title="Class",
             borderaxespad=0,
             borderpad=0,
