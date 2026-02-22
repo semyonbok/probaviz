@@ -5,8 +5,8 @@
 ### 🧱 Project Setup & Structure
 - [X] Update repo README file
 - [ ] Finalize and clean `requirements.txt`
-- [ ] Publish app on Streamlit Community Cloud
-- [ ] Add “Open in Streamlit” badge
+- [ ] ⭐ Publish app on Streamlit Community Cloud
+- [ ] ⭐ Add “Open in Streamlit” badge
 
 ### 🎓 Learning & Tools
 - [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
@@ -18,17 +18,19 @@
 
 ### 📊 Data Handling
 - [X] Binary/multiclass toy datasets
-- [ ] Synthetic data generation
-- [ ] Train/test data split
+- [ ] ⭐ Synthetic data generation
+- [X] Train/test data split
+- [ ] Decide on whether cashing datasets is needed at all
 
 ### 📈 Metrics & Evaluation
 - [X] Modify confusion/error matrix visualization
-- [ ] ROC curves
-- [ ] Precision–Recall curves
-- [ ] Dedicated tab with common classification metrics (perhaps leveraging `skore`)
+- [ ] ⭐ ROC curves
+- [ ] ⭐ Precision–Recall curves
+- [ ] ⭐ Learning curve
+- [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore`)
 
 ### 🎛️ Model & Interaction Features
-- [ ] Reset model button
+- [ ] ⭐ Reset model button
 - [X] Ensure switching model resets widgets
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [X] Add all "standalone" scikit-learn classifiers:
@@ -69,27 +71,28 @@
 - [ ] Migrate to a more interactive plotting framework like `plotly` 
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
-- [ ] Dedicated help/info toggles for all data visualization tabs
+- [ ] ⭐ Dedicated help/info toggles for all data visualization tabs
 - [X] Move model params out of contour plot title
 - [X] Standardize widget generation patterns (model registry?)
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
 - [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
-- [ ] Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
+- [ ] ⭐ Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
 - [ ] Add dedicated model description definitions
 - [ ] Balloons when 100% accuracy reached? Maybe a nice touch, but reinforces over-fitting on training data
+- [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 
 ### 🧠 GenAI Component
-- [ ] LLM component reacting to user's most recent change (explain what changed / why)
+- [ ] ⭐ LLM component reacting to user's most recent change (explain what changed / why)
 
 ### 🧹 Code Quality & Refactoring
-- [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
-- [ ] Create dedicated `utils.py` module
+- [ ] ⭐ Create dedicated `utils.py` module (parsers, prompt creation)
 - [X] Resolve reuse issues when switching datasets (e.g. `None → toy → None`)
 - [X] Refactor toward more Pythonic code (properties, clearer APIs)
-- [ ] Improve efficiency through cashing predictions/reducing conversions
+- [X] Improve efficiency through cashing predictions/reducing conversions
+- [X] Add `ProbaViz` tests
 - [ ] Add/update docstrings in viz.py
-- [ ] Add DataViz tests
+- [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
 - [ ] Add app tests
 
 ---

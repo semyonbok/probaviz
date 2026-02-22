@@ -12,12 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.base import is_classifier
-from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, f1_score
+from sklearn.metrics import ConfusionMatrixDisplay, f1_score
+from sklearn.model_selection import train_test_split
 
 plt.style.use("seaborn-v0_8-ticks")
 
 # Validation and lifecycle error messages.
-MSG_MISSING_DATA = "train_data, train_target, and features must all be set"
+MSG_MISSING_DATA = "data, target, and features must all be set"
 MSG_MODEL_REQUIRED = "a model must be set to compute this plot"
 MSG_MODEL_CLASSIFIER = "model must be a scikit-learn classifier"
 
@@ -43,26 +44,29 @@ class ProbaViz:
     def __init__(
         self,
         model: Any = None,
-        train_data: pd.DataFrame | None = None,
-        train_target: Sequence | None = None,
+        data: pd.DataFrame | None = None,
+        target: Sequence | None = None,
+        train_size: float | None = None,
         features: Sequence[str | int] | None = None,
         grid_res: Tuple[int, int] = (100, 100),
         *,
         auto_fit: bool = True,
     ):
         self._model: Any = None
-        self._train_data: pd.DataFrame | None = None
-        self._train_target: np.ndarray | None = None
+        self._data: pd.DataFrame | None = None
+        self._target: np.ndarray | None = None
+        self._train_size: np.ndarray | None = None
         self._features: np.ndarray | None = None
         self._grid_res: Tuple[int, int] = (100, 100)
         self._classes: np.ndarray = np.array([])
 
         self._coord_dict: dict[str, np.ndarray] = {}
         self._mesh_entries: np.ndarray = np.empty((0, 2))
+        self._xy: np.ndarray = np.empty((0, 2))
         self._train_xy: np.ndarray = np.empty((0, 2))
-        self._x_values: np.ndarray = np.empty(0)
-        self._y_values: np.ndarray = np.empty(0)
-        self._class_masks: dict[Any, np.ndarray] = {}
+        self._test_xy: np.ndarray = np.empty((0, 2))
+        self._train_target: np.ndarray = np.empty(0)
+        self._test_target: np.ndarray = np.empty(0)
         self._train_predictions: np.ndarray | None = None
         self._prediction_cache_valid = False
         self._is_dirty = True
@@ -71,10 +75,10 @@ class ProbaViz:
 
         self.grid_res = grid_res
 
-        if train_data is not None or train_target is not None or features is not None:
-            if train_data is None or train_target is None or features is None:
+        if data is not None or target is not None or features is not None:
+            if data is None or target is None or features is None:
                 raise ValueError(MSG_MISSING_DATA)
-            self.set_dataset(train_data, train_target, features, grid_res=grid_res)
+            self.set_dataset(data, target, features, train_size=train_size, grid_res=grid_res)
 
         self.model = model
 
@@ -90,28 +94,28 @@ class ProbaViz:
         self._mark_dirty()
 
     @property
-    def train_data(self) -> pd.DataFrame:
-        if self._train_data is None:
+    def data(self) -> pd.DataFrame:
+        if self._data is None:
             raise ValueError(MSG_MISSING_DATA)
-        return self._train_data
+        return self._data
 
-    @train_data.setter
-    def train_data(self, value: pd.DataFrame) -> None:
-        if self._train_target is None or self._features is None:
-            raise ValueError("train_target and features must be set before train_data")
-        self.set_dataset(value, self._train_target, self._features, grid_res=self._grid_res)
+    @data.setter
+    def data(self, value: pd.DataFrame) -> None:
+        if self._target is None or self._features is None:
+            raise ValueError("target and features must be set before data")
+        self.set_dataset(value, self._target, self._features, grid_res=self._grid_res)
 
     @property
-    def train_target(self) -> np.ndarray:
-        if self._train_target is None:
+    def target(self) -> np.ndarray:
+        if self._target is None:
             raise ValueError(MSG_MISSING_DATA)
-        return self._train_target
+        return self._target
 
-    @train_target.setter
-    def train_target(self, value: Sequence) -> None:
-        if self._train_data is None or self._features is None:
-            raise ValueError("train_data and features must be set before train_target")
-        self.set_dataset(self._train_data, value, self._features, grid_res=self._grid_res)
+    @target.setter
+    def target(self, value: Sequence) -> None:
+        if self._data is None or self._features is None:
+            raise ValueError("data and features must be set before target")
+        self.set_dataset(self._data, value, self._features, grid_res=self._grid_res)
 
     @property
     def features(self) -> np.ndarray:
@@ -121,9 +125,9 @@ class ProbaViz:
 
     @features.setter
     def features(self, value: Sequence[str | int]) -> None:
-        if self._train_data is None or self._train_target is None:
-            raise ValueError("train_data and train_target must be set before features")
-        self.set_dataset(self._train_data, self._train_target, value, grid_res=self._grid_res)
+        if self._data is None or self._target is None:
+            raise ValueError("data and target must be set before features")
+        self.set_dataset(self._data, self._target, value, grid_res=self._grid_res)
 
     @property
     def grid_res(self) -> Tuple[int, int]:
@@ -134,7 +138,7 @@ class ProbaViz:
         if len(value) != 2 or not all(isinstance(res, int) for res in value):
             raise TypeError("grid_res must contain two integers")
         self._grid_res = value
-        if self._train_data is not None and self._train_target is not None and self._features is not None:
+        if self._data is not None and self._target is not None and self._features is not None:
             self._build_mesh()
             self._mark_dirty()
 
@@ -157,14 +161,14 @@ class ProbaViz:
 
     def _validate_dataset_inputs(
         self,
-        train_data: pd.DataFrame,
-        train_target: Sequence | NDArray,
+        data: pd.DataFrame,
+        target: Sequence | NDArray,
         features: Sequence[str | int] | NDArray,
         grid_res: Tuple[int, int],
     ) -> None:
-        if not isinstance(train_data, pd.DataFrame):
-            raise TypeError("train_data must be a pandas DataFrame")
-        if train_data.shape[0] != len(train_target):
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("data must be a pandas DataFrame")
+        if data.shape[0] != len(target):
             raise ValueError("data & target must have the same length")
         if len(features) != 2:
             raise ValueError("two features must be specified for visualization")
@@ -173,16 +177,16 @@ class ProbaViz:
 
     def _select_feature_columns(
         self,
-        train_data: pd.DataFrame,
+        data: pd.DataFrame,
         features: Sequence[str | int] | NDArray,
     ) -> pd.DataFrame:
         try:
-            selected = train_data.iloc[:, list(features)]
+            selected = data.iloc[:, list(features)]
         except (IndexError, ValueError, TypeError):
             try:
-                selected = train_data.loc[:, list(features)]
+                selected = data.loc[:, list(features)]
             except KeyError as exc:
-                raise ValueError("features must reference existing train_data columns") from exc
+                raise ValueError("features must reference existing data columns") from exc
 
         for feature in selected.columns:
             if not pd.api.types.is_numeric_dtype(selected[feature]) or pd.api.types.is_bool_dtype(selected[feature]):
@@ -191,17 +195,17 @@ class ProbaViz:
         return selected
 
     def _build_mesh(self) -> None:
-        x_offset = np.ptp(self._x_values) / 100
-        y_offset = np.ptp(self._y_values) / 100
+        x_offset = np.ptp(self._xy[:, 0]) / 100
+        y_offset = np.ptp(self._xy[:, 1]) / 100
 
         x_values = np.linspace(
-            self._x_values.min() - x_offset,
-            self._x_values.max() + x_offset,
+            self._xy[:, 0].min() - x_offset,
+            self._xy[:, 0].max() + x_offset,
             self._grid_res[0],
         )
         y_values = np.linspace(
-            self._y_values.min() - y_offset,
-            self._y_values.max() + y_offset,
+            self._xy[:, 1].min() - y_offset,
+            self._xy[:, 1].max() + y_offset,
             self._grid_res[1],
         )
 
@@ -229,9 +233,10 @@ class ProbaViz:
 
     def set_dataset(
         self,
-        train_data: pd.DataFrame,
-        train_target: Sequence | NDArray,
+        data: pd.DataFrame,
+        target: Sequence | NDArray,
         features: Sequence[str | int] | NDArray | None = None,
+        train_size: float | None = None,
         grid_res: Tuple[int, int] | None = None,
     ) -> None:
         """
@@ -247,22 +252,23 @@ class ProbaViz:
 
         active_grid = self._grid_res if grid_res is None else grid_res
 
-        self._validate_dataset_inputs(train_data, train_target, active_features, active_grid)
-        selected_data = self._select_feature_columns(train_data, active_features)
-        train_target_arr = np.asarray(train_target)
-        train_xy = np.ascontiguousarray(selected_data.to_numpy())
+        self._validate_dataset_inputs(data, target, active_features, active_grid)
+        selected_data = self._select_feature_columns(data, active_features)
+        target_arr = np.asarray(target)
+        xy = np.ascontiguousarray(selected_data.to_numpy())
+        train_xy, test_xy, train_target_arr, test_target_arr = train_test_split(
+            xy, target_arr, stratify=target_arr, train_size=train_size
+        )
 
-        self._train_data = selected_data
-        self._train_target = train_target_arr
+        self._data = selected_data
         self._features = selected_data.columns.to_numpy()
-        self._classes = np.unique(train_target_arr)
+        self._classes = np.unique(target_arr)
+        self._xy = xy
         self._train_xy = train_xy
-        self._x_values = train_xy[:, 0]
-        self._y_values = train_xy[:, 1]
-        self._class_masks = {
-            current_class: train_target_arr == current_class
-            for current_class in self._classes
-        }
+        self._test_xy = test_xy
+        self._target = target_arr
+        self._train_target = train_target_arr
+        self._test_target = test_target_arr
         self._train_predictions = None
         self._prediction_cache_valid = False
         self._grid_res = active_grid
@@ -287,13 +293,14 @@ class ProbaViz:
         """
         if self._model is None:
             raise ValueError(MSG_MODEL_REQUIRED)
-        if self._train_data is None or self._train_target is None:
+        if self._data is None or self._target is None:
             raise ValueError(MSG_MISSING_DATA)
         self._ensure_model_compatibility(self._model)
 
         if force or self._is_dirty:
-            self._model.fit(self._train_xy, self.train_target)
+            self._model.fit(self._train_xy, self._train_target)
             self._train_predictions = self._model.predict(self._train_xy)
+            self._test_predictions = self._model.predict(self._test_xy)
             self._prediction_cache_valid = True
             self._is_fitted = True
             self._is_dirty = False
@@ -304,6 +311,12 @@ class ProbaViz:
             self._prediction_cache_valid = True
         return self._train_predictions  # type: ignore
 
+    def _get_test_predictions(self) -> np.ndarray:
+        if self._test_predictions is None or not self._prediction_cache_valid:
+            self._test_predictions = self.model.predict(self._test_xy)
+            self._prediction_cache_valid = True
+        return self._test_predictions  # type: ignore
+
     def plot(
         self,
         contour_on: bool = True,
@@ -313,12 +326,12 @@ class ProbaViz:
         """
         Plot train data and optional model probability contours.
         """
-        if self._train_data is None or self._train_target is None:
+        if self._data is None or self._target is None:
             raise ValueError(MSG_MISSING_DATA)
 
         fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
-        axes.set_xlabel(self.train_data.columns[0], fontsize=self.FS)
-        axes.set_ylabel(self.train_data.columns[1], fontsize=self.FS)
+        axes.set_xlabel(self.data.columns[0], fontsize=self.FS)
+        axes.set_ylabel(self.data.columns[1], fontsize=self.FS)
 
         cmap_cycle = cycle(CMAP_COLORS)
         m_color_cycle = cycle(MARKER_COLORS)
@@ -332,18 +345,19 @@ class ProbaViz:
             self._ensure_fitted_for_plot(require_predict_proba=True)
             pred_proba = self.model.predict_proba(self._mesh_entries)
             pred_class = np.argmax(pred_proba, axis=1)
-            train_acc = accuracy_score(
-                self._train_target, self._get_train_predictions())
             train_f1 = f1_score(
                 self._train_target, self._get_train_predictions(), average="weighted")
+            test_f1 = f1_score(
+                self._test_target, self._get_test_predictions(), average="weighted")
 
             axes.set_facecolor("k")
             axes.text(
                 1.04,
-                0.0,
+                0.00,
                 (
-                    f"Train Acc:\n{train_acc:.2%}\n\n"
-                    f"Train F1\n(Weighted):\n{train_f1:.2%}"
+                    f"Train F1\n(Weighted):\n{train_f1:.2%}\n"
+                    "$-----$\n"
+                    f"Test F1\n(Weighted):\n{test_f1:.2%}"
                 ),
                 verticalalignment="bottom",
                 horizontalalignment="left",
@@ -372,15 +386,28 @@ class ProbaViz:
                     cs1 = axes.contour(cs0, levels=levels[::3], colors=contour_color)
                     axes.clabel(cs1, levels[::3], inline=True, fontsize=self.FS)
 
+            marker_color = next(m_color_cycle)
+            marker_style = next(m_style_cycle)
             axes.scatter(
-                self._x_values[self._class_masks[current_class]],
-                self._y_values[self._class_masks[current_class]],
+                self._train_xy[self._train_target == current_class, 0],
+                self._train_xy[self._train_target == current_class, 1],
                 s=100,
-                c=next(m_color_cycle),
-                marker=next(m_style_cycle),
+                c=marker_color,
+                marker=marker_style,
                 edgecolor="k",
+                linewidths=2,
                 zorder=2,
                 label=current_class,
+            )
+            axes.scatter(
+                self._test_xy[self._test_target == current_class, 0],
+                self._test_xy[self._test_target == current_class, 1],
+                s=100,
+                c=marker_color,
+                marker=marker_style,
+                edgecolor="w",
+                linewidths=2,
+                zorder=2,
             )
 
         axes.legend(
@@ -413,6 +440,7 @@ class ProbaViz:
     def plot_matrices(
         self,
         return_fig: bool = False,
+        data_split: Literal["train", "test"] = "train",
         mode: Literal["confusion", "error"] = "confusion",
         fig_size: Tuple[int, int] = (16, 9),
     ) -> Optional[plt.Figure]:
@@ -420,12 +448,20 @@ class ProbaViz:
         Plot raw and normalized confusion/error matrices.
         """
         self._ensure_fitted_for_plot(require_predict_proba=False)
-        predictions = self._get_train_predictions()
+        if data_split == "train":
+            y_pred = self._get_train_predictions()
+            y_true = self._train_target
+        elif data_split == "test":
+            y_pred = self._get_test_predictions()
+            y_true = self._test_target
+        else:
+            raise ValueError("data_split must be either 'train' or 'test'")
+
         if mode == "confusion":
             sample_weight = None
             cmap: str = "Greys"
         elif mode == "error":
-            sample_weight = predictions != self.train_target
+            sample_weight = y_pred != y_true
             cmap = "Reds"
         else:
             raise ValueError("mode must be either 'confusion' or 'error'")
@@ -434,8 +470,8 @@ class ProbaViz:
             fig, axes = plt.subplots(1, 3, figsize=fig_size, tight_layout=True, sharey=True)
 
             ConfusionMatrixDisplay.from_predictions(
-                self.train_target,
-                predictions,
+                y_true,
+                y_pred,
                 display_labels=self.classes,
                 xticks_rotation="vertical",
                 sample_weight=sample_weight,
@@ -447,8 +483,8 @@ class ProbaViz:
             axes[0].set_title("Raw Counts")
 
             ConfusionMatrixDisplay.from_predictions(
-                self.train_target,
-                predictions,
+                y_true,
+                y_pred,
                 display_labels=self.classes,
                 xticks_rotation="vertical",
                 sample_weight=sample_weight,
@@ -463,8 +499,8 @@ class ProbaViz:
             axes[1].set_ylabel(None)
 
             ConfusionMatrixDisplay.from_predictions(
-                self.train_target,
-                predictions,
+                y_true,
+                y_pred,
                 display_labels=self.classes,
                 xticks_rotation="vertical",
                 sample_weight=sample_weight,

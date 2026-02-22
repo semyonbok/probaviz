@@ -11,7 +11,7 @@ from src.models import MODELS
 # streamlit data processing functions
 def _on_dataset_change() -> None:
     """When dataset changes, reset everything derived from it"""
-    for k in ["pv", "set_and_features", "f1", "f2"]:
+    for k in ["pv", "data_and_config", "f1", "f2"]:
         st.session_state.pop(k, None)
 
 
@@ -27,6 +27,35 @@ def process_toy(set_name):
     target_names_map = {k: v for k, v in enumerate(data_set["target_names"])}
 
     return data_set["data"], data_set["target"].map(target_names_map)
+
+
+def plot_matrices(tab_conf, tab_err):
+    tab_conf.subheader("Training Split")
+    tab_conf.pyplot(
+        st.session_state["pv"].plot_matrices(
+            return_fig=True, fig_size=(16, 9)
+        )
+    )
+    tab_conf.divider()
+    tab_conf.subheader("Testing Split")
+    tab_conf.pyplot(
+        st.session_state["pv"].plot_matrices(
+            return_fig=True, fig_size=(16, 9), data_split="test"
+        )
+    )
+    tab_err.subheader("Training Split")
+    tab_err.pyplot(
+        st.session_state["pv"].plot_matrices(
+            return_fig=True, mode="error", fig_size=(16, 9)
+        )
+    )
+    tab_err.divider()
+    tab_err.subheader("Testing Split")
+    tab_err.pyplot(
+        st.session_state["pv"].plot_matrices(
+            return_fig=True, mode="error", fig_size=(16, 9), data_split="test"
+        )
+    )
 
 
 # parsers
@@ -92,6 +121,7 @@ with st.sidebar:
                 "Pick Feature 2 (Y-axis)",
                 data.columns[data.columns != f1], key=f"{set_name}_f2"
             )
+            train_size = st.number_input("Pick Train Size", 0.5, 0.9, 0.75)
             st.caption(
                 f"{data.shape[0]} samples | {data.shape[1]} features | "
                 f"{target.nunique()} classes"
@@ -135,20 +165,20 @@ with st.sidebar:
 # if data and model are not None, plot contour
 if set_name is None:
     st.session_state.pop("pv", None)
-    st.session_state.pop("set_and_features", None)
+    st.session_state.pop("data_and_config", None)
     st.stop()
 
-if "set_and_features" not in st.session_state:
-    st.session_state["set_and_features"] = (set_name, f1, f2)
+if "data_and_config" not in st.session_state:
+    st.session_state["data_and_config"] = (set_name, f1, f2, train_size)
 
 # call `set_dataset` only when there is change in... data!
 if "pv" not in st.session_state:
     st.session_state["pv"] = ProbaViz(
-        model=model, train_data=data, train_target=target, features=[f1, f2]
+        model=model, data=data, target=target, train_size=train_size, features=[f1, f2]
     )
-elif st.session_state["set_and_features"] != (set_name, f1, f2):
-    st.session_state["set_and_features"] = (set_name, f1, f2)
-    st.session_state["pv"].set_dataset(data, target, [f1, f2])
+elif st.session_state["data_and_config"] != (set_name, f1, f2, train_size):
+    st.session_state["data_and_config"] = (set_name, f1, f2, train_size)
+    st.session_state["pv"].set_dataset(data, target, [f1, f2], train_size)
 
 if model is None:
     st.pyplot(
@@ -169,32 +199,14 @@ else:
                 contour_on=True, return_fig=True, fig_size=(16, 9)
             )
         )
-        tab_conf.pyplot(
-            st.session_state["pv"].plot_matrices(
-                return_fig=True, fig_size=(16, 9)
-            )
-        )
-        tab_err.pyplot(
-            st.session_state["pv"].plot_matrices(
-                return_fig=True, mode="error", fig_size=(16, 9)
-            )
-        )
+        plot_matrices(tab_conf, tab_err)
     except AttributeError:
         tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
             "Try changing hyper-parameters (e.g., Loss, Metric or Probability "
             "Estimates for support vector machines) or refer to documentation."
         )
-        tab_conf.pyplot(
-            st.session_state["pv"].plot_matrices(
-                return_fig=True, fig_size=(16, 9)
-            )
-        )
-        tab_err.pyplot(
-            st.session_state["pv"].plot_matrices(
-                return_fig=True, mode="error", fig_size=(16, 9)
-            )
-        )
+        plot_matrices(tab_conf, tab_err)
     except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
     finally:
