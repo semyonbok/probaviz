@@ -106,6 +106,8 @@
 - Set state via `model`, `set_dataset(...)`, `update_params(...)`.
 - Updates mark the instance as dirty; fitting occurs automatically on plotting calls.
 - Use `is_dirty` / `is_fitted` to inspect lifecycle state.
+- `train_size` is configurable via constructor, `set_dataset(...)`, and the `train_size` property; `None` delegates to sklearn defaults.
+- Splitting is strictly stratified; impossible class/sample configurations raise a targeted error rather than silently falling back.
 
 ### Decision: Exclude `LogisticRegressionCV`
 

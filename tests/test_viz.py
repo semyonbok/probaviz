@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 # Ensure project root is importable when pytest is executed via `conda run`.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.viz import ProbaViz  # type: ignore
+from src.viz import ProbaViz  # noqa
 
 
 class CountingSVC(SVC):
@@ -66,6 +66,71 @@ def test_validation_grid_res_type(binary_dataset):
     data, target = binary_dataset
     with pytest.raises(TypeError, match="grid_res"):
         ProbaViz(data=data, target=target, features=[0, 1], grid_res=(100, "a"))
+
+
+def test_train_size_property_defaults_to_none(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    assert viz.train_size is None
+
+
+def test_train_size_property_setter_roundtrip(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+
+    viz.train_size = 0.6
+    assert viz.train_size == pytest.approx(0.6)
+
+    viz.train_size = None
+    assert viz.train_size is None
+
+
+def test_split_random_state_property_defaults_to_none(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    assert viz.split_random_state is None
+
+
+def test_split_random_state_property_setter_roundtrip(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+
+    viz.split_random_state = 7
+    assert viz.split_random_state == 7
+
+    viz.split_random_state = None
+    assert viz.split_random_state is None
+
+
+@pytest.mark.parametrize("bad_train_size", ["0.8", object(), True])
+def test_train_size_validation_rejects_non_numeric(binary_dataset, bad_train_size):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    with pytest.raises(TypeError, match="train_size"):
+        viz.train_size = bad_train_size  # type: ignore[assignment]
+
+
+@pytest.mark.parametrize("bad_train_size", [0.0, 1.0, -0.1, 1.1])
+def test_train_size_validation_rejects_out_of_bounds(binary_dataset, bad_train_size):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    with pytest.raises(ValueError, match="train_size"):
+        viz.train_size = bad_train_size
+
+
+@pytest.mark.parametrize("bad_split_random_state", ["7", object(), True])
+def test_split_random_state_validation_rejects_non_integer(binary_dataset, bad_split_random_state):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    with pytest.raises(TypeError, match="split_random_state"):
+        viz.split_random_state = bad_split_random_state  # type: ignore[assignment]
+
+
+def test_split_random_state_validation_rejects_negative(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+    with pytest.raises(ValueError, match="split_random_state"):
+        viz.split_random_state = -1
 
 
 def test_fit_populates_train_prediction_cache(binary_dataset):
@@ -188,6 +253,81 @@ def test_set_dataset_marks_dirty_and_resets_is_fitted(binary_dataset):
 
     assert viz.is_dirty is True
     assert viz.is_fitted is False
+
+
+def test_train_size_setter_invalidates_and_recomputes_split(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    viz.fit()
+    viz.train_size = 0.6
+
+    assert viz.is_dirty is True
+    assert viz.is_fitted is False
+    assert viz._prediction_cache_valid is False
+    assert viz.train_size == pytest.approx(0.6)
+    assert viz._train_xy.shape[0] == 60
+    assert viz._test_xy.shape[0] == 40
+
+
+def test_train_size_persists_across_property_updates(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+
+    viz.train_size = 0.6
+    viz.target = target.copy()
+
+    assert viz.train_size == pytest.approx(0.6)
+    assert viz._train_xy.shape[0] == 60
+    assert viz._test_xy.shape[0] == 40
+
+
+def test_set_dataset_train_size_override_updates_state(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+
+    viz.train_size = 0.6
+    assert viz.train_size == pytest.approx(0.6)
+
+    viz.set_dataset(data, target, [1, 2], train_size=0.8)
+    assert viz.train_size == pytest.approx(0.8)
+
+    viz.set_dataset(data, target, [0, 1], train_size=None)
+    assert viz.train_size is None
+
+
+def test_set_dataset_split_random_state_override_updates_state(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1], train_size=0.6)
+
+    viz.split_random_state = 7
+    assert viz.split_random_state == 7
+
+    viz.set_dataset(data, target, [1, 2], train_size=0.6, split_random_state=9)
+    assert viz.split_random_state == 9
+
+    viz.set_dataset(data, target, [0, 1], train_size=0.6, split_random_state=None)
+    assert viz.split_random_state is None
+
+
+def test_split_random_state_makes_split_reproducible(binary_dataset):
+    data, target = binary_dataset
+    viz_1 = ProbaViz(
+        data=data, target=target, features=[0, 1], train_size=0.6, split_random_state=11
+    )
+    viz_2 = ProbaViz(
+        data=data, target=target, features=[0, 1], train_size=0.6, split_random_state=11
+    )
+
+    assert np.array_equal(viz_1._train_xy, viz_2._train_xy)
+    assert np.array_equal(viz_1._test_xy, viz_2._test_xy)
+
+
+def test_strict_stratified_split_failure_message():
+    data = pd.DataFrame({"x": [0.0, 1.0, 2.0], "y": [0.0, 1.0, 2.0]})
+    target = np.array([0, 1, 1])
+    with pytest.raises(ValueError, match="strict stratified train/test split"):
+        ProbaViz(data=data, target=target, features=[0, 1], train_size=0.8)
 
 
 def test_grid_res_change_updates_mesh_shape(binary_dataset):

@@ -30,27 +30,27 @@ def process_toy(set_name):
 
 
 def plot_matrices(tab_conf, tab_err):
-    tab_conf.subheader("Training Split")
+    tab_conf.subheader("Training Subset")
     tab_conf.pyplot(
         st.session_state["pv"].plot_matrices(
             return_fig=True, fig_size=(16, 9)
         )
     )
     tab_conf.divider()
-    tab_conf.subheader("Testing Split")
+    tab_conf.subheader("Testing Subset")
     tab_conf.pyplot(
         st.session_state["pv"].plot_matrices(
             return_fig=True, fig_size=(16, 9), data_split="test"
         )
     )
-    tab_err.subheader("Training Split")
+    tab_err.subheader("Training Subset")
     tab_err.pyplot(
         st.session_state["pv"].plot_matrices(
             return_fig=True, mode="error", fig_size=(16, 9)
         )
     )
     tab_err.divider()
-    tab_err.subheader("Testing Split")
+    tab_err.subheader("Testing Subset")
     tab_err.pyplot(
         st.session_state["pv"].plot_matrices(
             return_fig=True, mode="error", fig_size=(16, 9), data_split="test"
@@ -121,7 +121,15 @@ with st.sidebar:
                 "Pick Feature 2 (Y-axis)",
                 data.columns[data.columns != f1], key=f"{set_name}_f2"
             )
-            train_size = st.number_input("Pick Train Size", 0.5, 0.9, 0.75)
+            train_size = st.number_input("Pick Train Size", 0.5, 0.9, 0.75, 0.05)
+            split_random_state = st.number_input(
+                "Data Split Random State", 0, 999999, 42, 1,
+                key=f"{set_name}_split_random_state",
+                help=(
+                    "Controls the shuffling applied to the data before applying the split.  \n"
+                    "Please choose an integer for reproducible output."
+                )
+            )
             st.caption(
                 f"{data.shape[0]} samples | {data.shape[1]} features | "
                 f"{target.nunique()} classes"
@@ -157,6 +165,7 @@ with st.sidebar:
     st.subheader("Current Configuration")
     st.caption(f"Dataset: {set_name or 'None'}")
     st.caption(f"Features: {f1 if set_name else '-'} vs {f2 if set_name else '-'}")
+    st.caption(f"Split Random State: {split_random_state if set_name else '-'}")
     st.caption(f"Model: {model_pick or 'None'}")
 
 # Session State and Plotting Logic
@@ -169,16 +178,27 @@ if set_name is None:
     st.stop()
 
 if "data_and_config" not in st.session_state:
-    st.session_state["data_and_config"] = (set_name, f1, f2, train_size)
+    st.session_state["data_and_config"] = (set_name, f1, f2, train_size, split_random_state)
 
 # call `set_dataset` only when there is change in... data!
 if "pv" not in st.session_state:
     st.session_state["pv"] = ProbaViz(
-        model=model, data=data, target=target, train_size=train_size, features=[f1, f2]
+        model=model,
+        data=data,
+        target=target,
+        train_size=train_size,
+        split_random_state=split_random_state,
+        features=[f1, f2],
     )
-elif st.session_state["data_and_config"] != (set_name, f1, f2, train_size):
-    st.session_state["data_and_config"] = (set_name, f1, f2, train_size)
-    st.session_state["pv"].set_dataset(data, target, [f1, f2], train_size)
+elif st.session_state["data_and_config"] != (set_name, f1, f2, train_size, split_random_state):
+    st.session_state["data_and_config"] = (set_name, f1, f2, train_size, split_random_state)
+    st.session_state["pv"].set_dataset(
+        data,
+        target,
+        [f1, f2],
+        train_size=train_size,
+        split_random_state=split_random_state,
+    )
 
 if model is None:
     st.pyplot(

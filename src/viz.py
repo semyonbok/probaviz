@@ -6,11 +6,15 @@ from __future__ import annotations
 
 from itertools import cycle
 from typing import Any, Optional, Sequence, Tuple, Literal
+from numbers import Real
+from numbers import Integral
 from numpy.typing import NDArray
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.legend_handler import HandlerTuple
+from matplotlib.lines import Line2D
 from sklearn.base import is_classifier
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 from sklearn.model_selection import train_test_split
@@ -20,7 +24,8 @@ plt.style.use("seaborn-v0_8-ticks")
 # Validation and lifecycle error messages.
 MSG_MISSING_DATA = "data, target, and features must all be set"
 MSG_MODEL_REQUIRED = "a model must be set to compute this plot"
-MSG_MODEL_CLASSIFIER = "model must be a scikit-learn classifier"
+MSG_INVALID_TRAIN_SIZE = "train_size must be a float in the open interval (0, 1) or None"
+MSG_INVALID_SPLIT_RANDOM_STATE = "split_random_state must be a non-negative integer or None"
 
 CMAP_COLORS = ["Blues", "Oranges", "Greens", "Reds", "Purples", "Greys"]
 MARKER_COLORS = [
@@ -47,6 +52,7 @@ class ProbaViz:
         data: pd.DataFrame | None = None,
         target: Sequence | None = None,
         train_size: float | None = None,
+        split_random_state: int | None = None,
         features: Sequence[str | int] | None = None,
         grid_res: Tuple[int, int] = (100, 100),
         *,
@@ -55,7 +61,8 @@ class ProbaViz:
         self._model: Any = None
         self._data: pd.DataFrame | None = None
         self._target: np.ndarray | None = None
-        self._train_size: np.ndarray | None = None
+        self._train_size: float | None = None
+        self._split_random_state: int | None = None
         self._features: np.ndarray | None = None
         self._grid_res: Tuple[int, int] = (100, 100)
         self._classes: np.ndarray = np.array([])
@@ -68,6 +75,7 @@ class ProbaViz:
         self._train_target: np.ndarray = np.empty(0)
         self._test_target: np.ndarray = np.empty(0)
         self._train_predictions: np.ndarray | None = None
+        self._test_predictions: np.ndarray | None = None
         self._prediction_cache_valid = False
         self._is_dirty = True
         self._is_fitted = False
@@ -78,7 +86,14 @@ class ProbaViz:
         if data is not None or target is not None or features is not None:
             if data is None or target is None or features is None:
                 raise ValueError(MSG_MISSING_DATA)
-            self.set_dataset(data, target, features, train_size=train_size, grid_res=grid_res)
+            self.set_dataset(
+                data,
+                target,
+                features,
+                train_size=train_size,
+                split_random_state=split_random_state,
+                grid_res=grid_res,
+            )
 
         self.model = model
 
@@ -103,7 +118,14 @@ class ProbaViz:
     def data(self, value: pd.DataFrame) -> None:
         if self._target is None or self._features is None:
             raise ValueError("target and features must be set before data")
-        self.set_dataset(value, self._target, self._features, grid_res=self._grid_res)
+        self.set_dataset(
+            value,
+            self._target,
+            self._features,
+            train_size=self._train_size,
+            split_random_state=self._split_random_state,
+            grid_res=self._grid_res,
+        )
 
     @property
     def target(self) -> np.ndarray:
@@ -115,7 +137,14 @@ class ProbaViz:
     def target(self, value: Sequence) -> None:
         if self._data is None or self._features is None:
             raise ValueError("data and features must be set before target")
-        self.set_dataset(self._data, value, self._features, grid_res=self._grid_res)
+        self.set_dataset(
+            self._data,
+            value,
+            self._features,
+            train_size=self._train_size,
+            split_random_state=self._split_random_state,
+            grid_res=self._grid_res,
+        )
 
     @property
     def features(self) -> np.ndarray:
@@ -127,7 +156,14 @@ class ProbaViz:
     def features(self, value: Sequence[str | int]) -> None:
         if self._data is None or self._target is None:
             raise ValueError("data and target must be set before features")
-        self.set_dataset(self._data, self._target, value, grid_res=self._grid_res)
+        self.set_dataset(
+            self._data,
+            self._target,
+            value,
+            train_size=self._train_size,
+            split_random_state=self._split_random_state,
+            grid_res=self._grid_res,
+        )
 
     @property
     def grid_res(self) -> Tuple[int, int]:
@@ -141,6 +177,44 @@ class ProbaViz:
         if self._data is not None and self._target is not None and self._features is not None:
             self._build_mesh()
             self._mark_dirty()
+
+    @property
+    def train_size(self) -> float | None:
+        return self._train_size
+
+    @train_size.setter
+    def train_size(self, value: float | None) -> None:
+        validated = self._validate_train_size(value)
+        if self._data is None or self._target is None or self._features is None:
+            self._train_size = validated
+            return
+        self.set_dataset(
+            self._data,
+            self._target,
+            self._features,
+            train_size=validated,
+            split_random_state=self._split_random_state,
+            grid_res=self._grid_res,
+        )
+
+    @property
+    def split_random_state(self) -> int | None:
+        return self._split_random_state
+
+    @split_random_state.setter
+    def split_random_state(self, value: int | None) -> None:
+        validated = self._validate_split_random_state(value)
+        if self._data is None or self._target is None or self._features is None:
+            self._split_random_state = validated
+            return
+        self.set_dataset(
+            self._data,
+            self._target,
+            self._features,
+            train_size=self._train_size,
+            split_random_state=validated,
+            grid_res=self._grid_res,
+        )
 
     @property
     def classes(self) -> np.ndarray:
@@ -174,6 +248,26 @@ class ProbaViz:
             raise ValueError("two features must be specified for visualization")
         if len(grid_res) != 2 or not all(isinstance(res, int) for res in grid_res):
             raise TypeError("grid_res must contain two integers")
+
+    def _validate_train_size(self, train_size: float | None) -> float | None:
+        if train_size is None:
+            return None
+        if not isinstance(train_size, Real) or isinstance(train_size, bool):
+            raise TypeError(MSG_INVALID_TRAIN_SIZE)
+        train_size_float = float(train_size)
+        if not 0.0 < train_size_float < 1.0:
+            raise ValueError(MSG_INVALID_TRAIN_SIZE)
+        return train_size_float
+
+    def _validate_split_random_state(self, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if not isinstance(value, Integral) or isinstance(value, bool):
+            raise TypeError(MSG_INVALID_SPLIT_RANDOM_STATE)
+        random_state = int(value)
+        if random_state < 0:
+            raise ValueError(MSG_INVALID_SPLIT_RANDOM_STATE)
+        return random_state
 
     def _select_feature_columns(
         self,
@@ -216,7 +310,7 @@ class ProbaViz:
     def _ensure_model_compatibility(self, model: Any) -> None:
         # XXX this check will create problems when working with other frameworks
         if not is_classifier(model):
-            raise TypeError(MSG_MODEL_CLASSIFIER)
+            raise TypeError("model must be a scikit-learn classifier")
 
     def _ensure_fitted_for_plot(self, require_predict_proba: bool = False) -> None:
         if self._model is None:
@@ -237,6 +331,7 @@ class ProbaViz:
         target: Sequence | NDArray,
         features: Sequence[str | int] | NDArray | None = None,
         train_size: float | None = None,
+        split_random_state: int | None = None,
         grid_res: Tuple[int, int] | None = None,
     ) -> None:
         """
@@ -252,24 +347,37 @@ class ProbaViz:
 
         active_grid = self._grid_res if grid_res is None else grid_res
 
+        active_train_size = self._validate_train_size(train_size)
+        active_split_random_state = self._validate_split_random_state(split_random_state)
         self._validate_dataset_inputs(data, target, active_features, active_grid)
         selected_data = self._select_feature_columns(data, active_features)
         target_arr = np.asarray(target)
         xy = np.ascontiguousarray(selected_data.to_numpy())
-        train_xy, test_xy, train_target_arr, test_target_arr = train_test_split(
-            xy, target_arr, stratify=target_arr, train_size=train_size
-        )
+        try:
+            train_xy, test_xy, train_target_arr, test_target_arr = train_test_split(
+                xy, target_arr, stratify=target_arr, train_size=active_train_size,
+                random_state=active_split_random_state,
+            )
+        except ValueError as exc:
+            raise ValueError(
+                "Unable to perform strict stratified train/test split. "
+                "Ensure each class has enough samples for both splits and that "
+                "train_size is compatible with class frequencies."
+            ) from exc
 
         self._data = selected_data
         self._features = selected_data.columns.to_numpy()
         self._classes = np.unique(target_arr)
         self._xy = xy
+        self._train_size = active_train_size
+        self._split_random_state = active_split_random_state
         self._train_xy = train_xy
         self._test_xy = test_xy
         self._target = target_arr
         self._train_target = train_target_arr
         self._test_target = test_target_arr
         self._train_predictions = None
+        self._test_predictions = None
         self._prediction_cache_valid = False
         self._grid_res = active_grid
         self._build_mesh()
@@ -332,6 +440,7 @@ class ProbaViz:
         fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
         axes.set_xlabel(self.data.columns[0], fontsize=self.FS)
         axes.set_ylabel(self.data.columns[1], fontsize=self.FS)
+        axes.set_facecolor("whitesmoke")
 
         cmap_cycle = cycle(CMAP_COLORS)
         m_color_cycle = cycle(MARKER_COLORS)
@@ -340,24 +449,25 @@ class ProbaViz:
         pred_proba = None
         pred_class = None
         levels = np.arange(0.0, 1.05, 0.05)
+        class_handles = []
 
         if contour_on:
             self._ensure_fitted_for_plot(require_predict_proba=True)
             pred_proba = self.model.predict_proba(self._mesh_entries)
             pred_class = np.argmax(pred_proba, axis=1)
             train_f1 = f1_score(
-                self._train_target, self._get_train_predictions(), average="weighted")
+                self._train_target, self._get_train_predictions(), average="macro")
             test_f1 = f1_score(
-                self._test_target, self._get_test_predictions(), average="weighted")
+                self._test_target, self._get_test_predictions(), average="macro")
 
             axes.set_facecolor("k")
             axes.text(
                 1.04,
                 0.00,
                 (
-                    f"Train F1\n(Weighted):\n{train_f1:.2%}\n"
+                    f"Train F1\n(Macro):\n{train_f1:.2%}\n"
                     "$-----$\n"
-                    f"Test F1\n(Weighted):\n{test_f1:.2%}"
+                    f"Test F1\n(Macro):\n{test_f1:.2%}"
                 ),
                 verticalalignment="bottom",
                 horizontalalignment="left",
@@ -388,7 +498,7 @@ class ProbaViz:
 
             marker_color = next(m_color_cycle)
             marker_style = next(m_style_cycle)
-            axes.scatter(
+            train_scatter = axes.scatter(
                 self._train_xy[self._train_target == current_class, 0],
                 self._train_xy[self._train_target == current_class, 1],
                 s=100,
@@ -399,6 +509,7 @@ class ProbaViz:
                 zorder=2,
                 label=current_class,
             )
+            class_handles.append(train_scatter)
             axes.scatter(
                 self._test_xy[self._test_target == current_class, 0],
                 self._test_xy[self._test_target == current_class, 1],
@@ -410,10 +521,39 @@ class ProbaViz:
                 zorder=2,
             )
 
+        split_train_handle = (
+            Line2D(
+                [0], [0], marker="o", linestyle="None",
+                markerfacecolor="#2B7BBA", markeredgecolor="k",
+                markersize=21,
+            ),
+            Line2D(
+                [0], [0], marker="o", linestyle="None",
+                markerfacecolor="tab:blue", markeredgecolor="k",
+                markeredgewidth=2.2, markersize=9,
+            ),
+        )
+        split_test_handle = (
+            Line2D(
+                [0], [0], marker="o", linestyle="None",
+                markerfacecolor="#2B7BBA", markeredgecolor="k",
+                markersize=21,
+            ),
+            Line2D(
+                [0], [0], marker="o", linestyle="None",
+                markerfacecolor="tab:blue", markeredgecolor="w",
+                markeredgewidth=2.2, markersize=9,
+            ),
+        )
+        handles = [split_train_handle, split_test_handle, *class_handles,]
+        labels = ["Train", "Test", *map(lambda h: h.get_label(), class_handles)]
+
         axes.legend(
+            handles=handles,
+            labels=labels,
             loc="upper left",
             bbox_to_anchor=(1.04, 1.0),
-            title="Class",
+            title="Subset / Class",
             borderaxespad=0,
             borderpad=0,
             handletextpad=1.0,
@@ -421,6 +561,7 @@ class ProbaViz:
             alignment="left",
             fontsize=self.FS,
             title_fontsize=self.FS,
+            handler_map={tuple: HandlerTuple(ndivide=1, pad=0.0)},
         )
         axes.tick_params(axis="both", which="major", labelsize=self.FS)
 
