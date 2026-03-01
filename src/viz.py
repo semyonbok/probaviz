@@ -440,7 +440,7 @@ class ProbaViz:
         fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
         axes.set_xlabel(self.data.columns[0], fontsize=self.FS)
         axes.set_ylabel(self.data.columns[1], fontsize=self.FS)
-        axes.set_facecolor("whitesmoke")
+        axes.set_facecolor("#F0F2F6")
 
         cmap_cycle = cycle(CMAP_COLORS)
         m_color_cycle = cycle(MARKER_COLORS)
@@ -466,7 +466,7 @@ class ProbaViz:
                 0.00,
                 (
                     f"Train F1\n(Macro):\n{train_f1:.2%}\n"
-                    "$-----$\n"
+                    "$----$\n"
                     f"Test F1\n(Macro):\n{test_f1:.2%}"
                 ),
                 verticalalignment="bottom",
@@ -524,7 +524,7 @@ class ProbaViz:
         split_train_handle = (
             Line2D(
                 [0], [0], marker="o", linestyle="None",
-                markerfacecolor="#2B7BBA", markeredgecolor="k",
+                markerfacecolor="#539ECD", markeredgecolor="k",
                 markersize=21,
             ),
             Line2D(
@@ -536,7 +536,7 @@ class ProbaViz:
         split_test_handle = (
             Line2D(
                 [0], [0], marker="o", linestyle="None",
-                markerfacecolor="#2B7BBA", markeredgecolor="k",
+                markerfacecolor="#539ECD", markeredgecolor="k",
                 markersize=21,
             ),
             Line2D(
@@ -608,7 +608,7 @@ class ProbaViz:
             raise ValueError("mode must be either 'confusion' or 'error'")
 
         with plt.rc_context({"font.size": self.FS}):
-            fig, axes = plt.subplots(1, 3, figsize=fig_size, tight_layout=True, sharey=True)
+            fig, axes = plt.subplots(3, 1, figsize=fig_size, tight_layout=False, sharex=True)
 
             ConfusionMatrixDisplay.from_predictions(
                 y_true,
@@ -622,6 +622,7 @@ class ProbaViz:
                 ax=axes[0],
             )
             axes[0].set_title("Raw Counts")
+            axes[0].set_xlabel(None)
 
             ConfusionMatrixDisplay.from_predictions(
                 y_true,
@@ -637,7 +638,7 @@ class ProbaViz:
                 im_kw={"vmin": 0, "vmax": 1},
             )
             axes[1].set_title("Normalized by Row")
-            axes[1].set_ylabel(None)
+            axes[1].set_xlabel(None)
 
             ConfusionMatrixDisplay.from_predictions(
                 y_true,
@@ -653,7 +654,6 @@ class ProbaViz:
                 im_kw={"vmin": 0, "vmax": 1},
             )
             axes[2].set_title("Normalized by Column")
-            axes[2].set_ylabel(None)
 
         if return_fig:
             return fig

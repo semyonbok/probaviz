@@ -11,7 +11,7 @@
 ### 🎓 Learning & Tools
 - [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
 - [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
-- [ ] Re-read VS Code documentation on AI tools and try GitHub Copilot
+- [ ] Re-read Groq Documentation
 - [X] Familiarise with and try Codex
   - [ ] Set up and run a Cloud env to implement a feature
   - [ ] Try CLI
@@ -26,8 +26,9 @@
 - [X] Modify confusion/error matrix visualization
 - [ ] ⭐ ROC curves
 - [ ] ⭐ Precision–Recall curves
-- [ ] ⭐ Learning curve
-- [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore`)
+- [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
+- [ ] Calibration display for binary classification
+- [ ] Learning curve
 
 ### 🎛️ Model & Interaction Features
 - [ ] ⭐ Reset model button
@@ -94,30 +95,3 @@
 - [ ] Add/update docstrings in viz.py
 - [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
 - [ ] Add app tests
-
----
-
-## Notes
-
-### ProbaViz API (refactor note)
-
-`ProbaViz` now supports a property-driven API with lazy model fitting:
-
-- Set state via `model`, `set_dataset(...)`, `update_params(...)`.
-- Updates mark the instance as dirty; fitting occurs automatically on plotting calls.
-- Use `is_dirty` / `is_fitted` to inspect lifecycle state.
-- `train_size` is configurable via constructor, `set_dataset(...)`, and the `train_size` property; `None` delegates to sklearn defaults.
-- Splitting is strictly stratified; impossible class/sample configurations raise a targeted error rather than silently falling back.
-
-### Decision: Exclude `LogisticRegressionCV`
-
-`LogisticRegressionCV` is intentionally excluded from the core model registry.
-
-**Rationale:**
-The app is designed for interactive, user-driven exploration of hyperparameters and their effect on decision boundaries and class probability scores. Cross-validated estimators (e.g., `LogisticRegressionCV`) internally perform hyperparameter search and select values automatically, which:
-
-* obscures which hyperparameters are actively shaping the displayed decision surface,
-* introduces additional UI complexity (grids, folds, scoring),
-* overlaps with the app’s core purpose of manual, visual trial-and-error tuning.
-
-If automated tuning is added in the future, it should be introduced as a separate optional mode rather than as a standalone model in the main registry.

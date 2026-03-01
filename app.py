@@ -30,30 +30,33 @@ def process_toy(set_name):
 
 
 def plot_matrices(tab_conf, tab_err):
-    tab_conf.subheader("Training Subset")
-    tab_conf.pyplot(
+    # confusion matrices
+    train_col, test_col = tab_conf.columns(2)
+    train_col.subheader("Train Subset")
+    train_col.pyplot(
         st.session_state["pv"].plot_matrices(
-            return_fig=True, fig_size=(16, 9)
+            return_fig=True, fig_size=(9, 16)
         )
     )
-    tab_conf.divider()
-    tab_conf.subheader("Testing Subset")
-    tab_conf.pyplot(
+    test_col.subheader("Test Subset")
+    test_col.pyplot(
         st.session_state["pv"].plot_matrices(
-            return_fig=True, fig_size=(16, 9), data_split="test"
+            return_fig=True, fig_size=(9, 16), data_split="test"
         )
     )
-    tab_err.subheader("Training Subset")
-    tab_err.pyplot(
+
+    # error matrices
+    train_col, test_col = tab_err.columns(2)
+    train_col.subheader("Train Subset")
+    train_col.pyplot(
         st.session_state["pv"].plot_matrices(
-            return_fig=True, mode="error", fig_size=(16, 9)
+            return_fig=True, mode="error", fig_size=(9, 16)
         )
     )
-    tab_err.divider()
-    tab_err.subheader("Testing Subset")
-    tab_err.pyplot(
+    test_col.subheader("Test Subset")
+    test_col.pyplot(
         st.session_state["pv"].plot_matrices(
-            return_fig=True, mode="error", fig_size=(16, 9), data_split="test"
+            return_fig=True, mode="error", fig_size=(9, 16), data_split="test"
         )
     )
 
@@ -121,7 +124,10 @@ with st.sidebar:
                 "Pick Feature 2 (Y-axis)",
                 data.columns[data.columns != f1], key=f"{set_name}_f2"
             )
-            train_size = st.number_input("Pick Train Size", 0.5, 0.9, 0.75, 0.05)
+            train_size = st.number_input(
+                "Pick Train Size", 0.5, 0.9, 0.75, 0.05,
+                help="Controls the fraction of data allocated for training."
+            )
             split_random_state = st.number_input(
                 "Data Split Random State", 0, 999999, 42, 1,
                 key=f"{set_name}_split_random_state",
