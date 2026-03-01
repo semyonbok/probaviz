@@ -1,0 +1,1 @@
+For testing, use `conda run -n probaviz pytest`.

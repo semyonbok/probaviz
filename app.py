@@ -1,4 +1,3 @@
-import re
 import streamlit as st
 
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
@@ -6,6 +5,7 @@ from sklearn.datasets import load_iris, load_wine, load_breast_cancer
 from src.viz import ProbaViz
 from src.widgets import none_or_widget
 from src.models import MODELS
+from src.parsers import parse_model_desc, parse_param_desc
 
 
 # streamlit data processing functions
@@ -59,35 +59,6 @@ def plot_matrices(tab_conf, tab_err):
             return_fig=True, mode="error", fig_size=(9, 16), data_split="test"
         )
     )
-
-
-# parsers
-def parse_param_desc(model):
-    params = model.get_params().keys()
-    params = "|".join([p + " : " for p in params])
-
-    params_desc = re.split(params, model.__doc__)[1:]
-    params_desc[-1] = params_desc[-1].split("Attributes\n")[0]
-    params_desc = {
-        k[:-3]: "  \n".join(v.split("\n\n"))
-        for k, v in zip(re.findall(params, model.__doc__), params_desc)
-    }
-    return params_desc
-
-
-def parse_model_desc(model) -> str:
-    """
-    Return a compact markdown description of an sklearn estimator:
-    - constructor-style repr (shows non-default params)
-    - short docstring description (before 'Parameters')
-    """
-    doc = model.__doc__ or ""
-    desc = doc.split("Parameters", 1)[0].strip()
-
-    # Collapse excessive whitespace but keep paragraphs
-    desc = "\n\n".join(p.strip() for p in desc.split("\n\n") if p.strip())
-
-    return f"```python\n{repr(model)}\n``` \n\n{desc}"
 
 
 # main display space

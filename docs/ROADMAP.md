@@ -78,7 +78,28 @@
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
 - [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
-- [ ] ⭐ Improve dataset / config parser (try replacing text like ":ref:User Guide <adaboost>." with actual links)
+- [ ] ⭐ Improve model / parameter parser
+  - [ ] replace restructured text with markdown links (there are also arxiv and doi roles):
+    - [X] ref
+    - [ ] term
+    - [ ] class
+    - [ ] meth
+    - [ ] obj
+    - [ ] mod
+    - [ ] func
+  - [ ] replace directives with markdown:
+    - [ ] ('versionadded', 71)
+    - [ ] ('versionchanged', 35)
+    - [ ] ('following', 5)
+    - [ ] ('deprecated', 4)
+    - [ ] ('warning', 3)
+    - [ ] ('note', 3)
+    - [ ] ('seealso', 1)
+    - [ ] ('signature', 1)
+    - [ ] ('are', 1)
+  - [ ] include more of model description (e.g., Attributes, Notes)
+  - [ ] turn section names into subheader (again Attributes, Notes)
+  - [ ] turn model names into links to documentation
 - [ ] Add dedicated model description definitions
 - [ ] Balloons when 100% accuracy reached? Maybe a nice touch, but reinforces over-fitting on training data
 - [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
@@ -87,7 +108,7 @@
 - [ ] ⭐ LLM component reacting to user's most recent change (explain what changed / why)
 
 ### 🧹 Code Quality & Refactoring
-- [ ] ⭐ Create dedicated `utils.py` module (parsers, prompt creation)
+- [X] Create dedicated `parsers.py` module
 - [X] Resolve reuse issues when switching datasets (e.g. `None → toy → None`)
 - [X] Refactor toward more Pythonic code (properties, clearer APIs)
 - [X] Improve efficiency through cashing predictions/reducing conversions
