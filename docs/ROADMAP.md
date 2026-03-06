@@ -10,6 +10,7 @@
 
 ### 🎓 Learning & Tools
 - [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
+- [ ] Deep-dive into sklearn classification metrics (skolar, user docs)
 - [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
 - [ ] Re-read Groq Documentation
 - [X] Familiarise with and try Codex
@@ -81,12 +82,12 @@
 - [ ] ⭐ Improve model / parameter parser
   - [ ] replace restructured text with markdown links (there are also arxiv and doi roles):
     - [X] ref
-    - [ ] term
-    - [ ] class
-    - [ ] meth
-    - [ ] obj
-    - [ ] mod
-    - [ ] func
+    - [X] term
+    - [X] class
+    - [X] meth
+    - [X] obj
+    - [X] mod
+    - [X] func
   - [ ] replace directives with markdown:
     - [ ] ('versionadded', 71)
     - [ ] ('versionchanged', 35)
@@ -97,9 +98,12 @@
     - [ ] ('seealso', 1)
     - [ ] ('signature', 1)
     - [ ] ('are', 1)
+  - [X] replace external links like: scipy.spatial.distance     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>
+  - [ ] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
   - [ ] include more of model description (e.g., Attributes, Notes)
   - [ ] turn section names into subheader (again Attributes, Notes)
   - [ ] turn model names into links to documentation
+  - [X] link validation
 - [ ] Add dedicated model description definitions
 - [ ] Balloons when 100% accuracy reached? Maybe a nice touch, but reinforces over-fitting on training data
 - [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")

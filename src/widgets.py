@@ -198,9 +198,9 @@ def nc_widgets(hp_desc: dict[str, str]) -> dict:
     hp["shrink_threshold"] = none_or_widget(
         "shrink_threshold",
         widget=st.number_input,
-        min_value=0.0,
+        min_value=0.001,
         max_value=10.0,
-        value=0.0,
+        value=0.1,
         step=0.1,
         help=hp_desc["shrink_threshold"],
         key="nc_shrink_threshold",
