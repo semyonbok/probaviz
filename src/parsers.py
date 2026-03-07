@@ -57,6 +57,20 @@ OBJ_PATTERN = re.compile(r":obj:`([^`]+?)`")
 MOD_PATTERN = re.compile(r":mod:`([^`]+?)`")
 FUNC_PATTERN = re.compile(r":func:`([^`]+?)`")
 EXTERNAL_LINK_PATTERN = re.compile(r"`([^`<>]+?)\s*<https?://([^`<>]+?)>`_?")
+RST_DIRECTIVES = (
+    "versionadded",
+    "versionchanged",
+    "following",
+    "deprecated",
+    "warning",
+    "note",
+    "seealso",
+    "signature",
+    "are",
+)
+DIRECTIVE_START_PATTERN = re.compile(
+    rf"^(\s*)\.\.\s*({'|'.join(RST_DIRECTIVES)})::\s*(.*)$"
+)
 
 
 def _split_rst_role_content(content: str) -> tuple[str, str]:
@@ -99,6 +113,55 @@ def _replace_role(
         return resolver(label, target)
 
     return pattern.sub(replace_match, text)
+
+
+def replace_rst_directives(text: str) -> str:
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+        match = DIRECTIVE_START_PATTERN.match(line)
+        if match is None:
+            out.append(line)
+            i += 1
+            continue
+
+        base_indent, directive_name, inline_body = match.groups()
+        body_lines: list[str] = []
+        j = i + 1
+        while j < len(lines):
+            candidate = lines[j]
+            if candidate.startswith(base_indent + " ") or candidate.startswith(base_indent + "\t"):
+                body_lines.append(candidate.strip())
+                j += 1
+                continue
+            if candidate.strip() == "":
+                body_lines.append("")
+                j += 1
+                continue
+            break
+
+        directive_title = directive_name.replace("_", " ").title()
+        inline_body = inline_body.strip()
+
+        if inline_body:
+            out.append(f"> **{directive_title}**: {inline_body}")
+        else:
+            out.append(f"> **{directive_title}**")
+
+        for body in body_lines:
+            if body:
+                out.append(f"> {body}")
+            else:
+                out.append(">")
+
+        # Keep adjacent directives visually separated in markdown rendering.
+        out.append("")
+        i = j
+
+    return "\n".join(out)
 
 
 def replace_external_links(text: str) -> str:
@@ -168,6 +231,7 @@ def replace_sklearn_funcs(text: str) -> str:
 
 
 def rst_roles_to_markdown(text: str) -> str:
+    text = replace_rst_directives(text)
     text = replace_external_links(text)
     text = replace_sklearn_refs(text)
     text = replace_sklearn_terms(text)

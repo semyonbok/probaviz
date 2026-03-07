@@ -79,7 +79,7 @@
 - [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
 - [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
-- [ ] ⭐ Improve model / parameter parser
+- [ ] Improve model / parameter parser
   - [ ] replace restructured text with markdown links (there are also arxiv and doi roles):
     - [X] ref
     - [X] term
@@ -88,16 +88,16 @@
     - [X] obj
     - [X] mod
     - [X] func
-  - [ ] replace directives with markdown:
-    - [ ] ('versionadded', 71)
-    - [ ] ('versionchanged', 35)
-    - [ ] ('following', 5)
-    - [ ] ('deprecated', 4)
-    - [ ] ('warning', 3)
-    - [ ] ('note', 3)
-    - [ ] ('seealso', 1)
-    - [ ] ('signature', 1)
-    - [ ] ('are', 1)
+  - [X] replace directives with markdown:
+    - [X] ('versionadded', 71)
+    - [X] ('versionchanged', 35)
+    - [X] ('following', 5)
+    - [X] ('deprecated', 4)
+    - [X] ('warning', 3)
+    - [X] ('note', 3)
+    - [X] ('seealso', 1)
+    - [X] ('signature', 1)
+    - [X] ('are', 1)
   - [X] replace external links like: scipy.spatial.distance     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>
   - [ ] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
   - [ ] include more of model description (e.g., Attributes, Notes)

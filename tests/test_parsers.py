@@ -13,6 +13,7 @@ from src.models import MODELS  # noqa
 from src.parsers import (  # noqa
     API_BASE_URL,
     BASE_URL,
+    RST_DIRECTIVES,
     GENERATED_BASE_URL,
     GLOSSARY_URL,
     FUNC_PATTERN,
@@ -25,6 +26,7 @@ from src.parsers import (  # noqa
     parse_model_desc,
     parse_param_desc,
     replace_external_links,
+    replace_rst_directives,
     replace_sklearn_refs,
     rst_roles_to_markdown,
 )
@@ -72,6 +74,11 @@ def assert_urls_safe(urls: list[str]) -> None:
 def assert_no_rst_role_markup(text: str) -> None:
     for role in ROLES:
         assert f":{role}:`" not in text
+
+
+def assert_no_rst_directive_markup(text: str) -> None:
+    for directive in RST_DIRECTIVES:
+        assert f".. {directive}::" not in text
 
 
 @pytest.mark.parametrize("model_key", sorted(MODELS.keys()))
@@ -132,6 +139,7 @@ def test_parse_model_desc_smoke_and_links_are_safe(model_key):
     out = parse_model_desc(model)
 
     assert_no_rst_role_markup(out)
+    assert_no_rst_directive_markup(out)
     assert_urls_safe(extract_md_urls(out))
 
 
@@ -144,6 +152,7 @@ def test_parse_param_desc_smoke_and_links_are_safe(model_key):
     assert isinstance(out, dict)
     combined = "\n".join(out.values())
     assert_no_rst_role_markup(combined)
+    assert_no_rst_directive_markup(combined)
     assert_urls_safe(extract_md_urls(combined))
 
 
@@ -199,6 +208,33 @@ def test_replace_external_links_converts_rst_style_external_link():
         replaced
         == "[scipy.spatial.distance](https://docs.scipy.org/doc/scipy/reference/spatial.distance.html)"
     )
+
+
+@pytest.mark.parametrize("directive", RST_DIRECTIVES)
+def test_replace_rst_directives_converts_to_blockquote_markdown(directive):
+    text = (
+        f".. {directive}:: 1.0\n"
+        "   First detail line.\n"
+        "   Second detail line."
+    )
+    replaced = replace_rst_directives(text)
+    assert f".. {directive}::" not in replaced
+    assert replaced.startswith("> **")
+    assert "> First detail line." in replaced
+    assert "> Second detail line." in replaced
+
+
+def test_replace_rst_directives_separates_adjacent_directive_blocks():
+    text = (
+        ".. note:: First\n"
+        "   Alpha.\n"
+        ".. warning:: Second\n"
+        "   Beta."
+    )
+    replaced = replace_rst_directives(text)
+    assert "> **Note**: First" in replaced
+    assert "> **Warning**: Second" in replaced
+    assert "\n\n> **Warning**: Second" in replaced
 
 
 @pytest.mark.parametrize("role", ROLES)
