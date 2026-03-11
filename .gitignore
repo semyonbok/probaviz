@@ -2,5 +2,6 @@ __pycache__
 .mypy_cache
 .vscode/
 notebooks/
+tools/
 probaviz.yaml
 cspell.json

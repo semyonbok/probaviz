@@ -80,7 +80,7 @@
 - [ ] Add deprecated badge against affected hyper-parameters
 - [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
 - [ ] Improve model / parameter parser
-  - [ ] replace restructured text with markdown links (there are also arxiv and doi roles):
+  - [X] replace restructured text with markdown links (there are also arxiv and doi roles):
     - [X] ref
     - [X] term
     - [X] class
@@ -100,12 +100,27 @@
     - [X] ('are', 1)
   - [X] replace external links like: scipy.spatial.distance     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>
   - [ ] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
-  - [ ] include more of model description (e.g., Attributes, Notes)
-  - [ ] turn section names into subheader (again Attributes, Notes)
+  - [ ] model info expander improvements
+    - [ ] in the code snippet, also give model import statement
+    - [ ] include more model details (e.g., Attributes, Notes)
+    - [ ] turn section names into subheaders
   - [ ] turn model names into links to documentation
   - [X] link validation
+  - [X] simply cache processed model/params markdown
+  - [ ] instead of caching with JSON, consider caching at runtime with `streamlit`:
+    ```python
+    @st.cache_data
+    def get_model_desc(model_key: str) -> str:
+        model = MODELS[model_key].factory()
+        return parse_model_desc(model)
+
+    @st.cache_data
+    def get_param_desc(model_key: str) -> dict[str, str]:
+        model = MODELS[model_key].factory()
+        return parse_param_desc(model)
+    ```
 - [ ] Add dedicated model description definitions
-- [ ] Balloons when 100% accuracy reached? Maybe a nice touch, but reinforces over-fitting on training data
+- [ ] Balloons when a 100% metric reached on a test subset
 - [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 
 ### 🧠 GenAI Component

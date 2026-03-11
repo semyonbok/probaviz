@@ -6,6 +6,7 @@ from src.viz import ProbaViz
 from src.widgets import none_or_widget
 from src.models import MODELS
 from src.parsers import parse_model_desc, parse_param_desc
+from src.model_docs_cache import get_cached_model_docs, load_model_docs_cache
 
 
 # streamlit data processing functions
@@ -27,6 +28,11 @@ def process_toy(set_name):
     target_names_map = {k: v for k, v in enumerate(data_set["target_names"])}
 
     return data_set["data"], data_set["target"].map(target_names_map)
+
+
+@st.cache_data
+def load_cached_model_docs():
+    return load_model_docs_cache()
 
 
 def plot_matrices(tab_conf, tab_err):
@@ -126,7 +132,14 @@ with st.sidebar:
 
     # set `random_state` if the model has this parameter
     if (model is not None) and (set_name is not None):
-        hp_desc = parse_param_desc(model)
+        cached_docs = (
+            get_cached_model_docs(model_pick, payload=load_cached_model_docs())
+            if model_pick is not None else None
+        )
+        if cached_docs is not None:
+            model_desc, hp_desc = cached_docs
+        else:
+            hp_desc = parse_param_desc(model)
         if "random_state" in model.get_params().keys():
             hp["random_state"] = none_or_widget(
                 "Random State", 0, 999999, 1, 1,
@@ -208,4 +221,9 @@ else:
         st.error(f"❌ **Model failed to fit.** {e}")
     finally:
         with st.expander("Model Info", icon="ℹ️"):
-            st.info(parse_model_desc(model))
+            if model_pick is not None:
+                model_repr = f"```python\n{repr(model)}\n```"
+                if cached_docs is not None:
+                    st.info(model_repr + model_desc)
+                else:
+                    st.info(model_repr + parse_model_desc(model))

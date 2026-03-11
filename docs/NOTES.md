@@ -25,6 +25,11 @@ The app is designed for interactive, user-driven exploration of hyperparameters 
 
 If automated tuning is added in the future, it should be introduced as a separate optional mode rather than as a standalone model in the main registry.
 
+### Matrix Arrangement Choice
+Allocating a column for train/test subsets and arranging the matrices vertically makes it a bit text-heavy but:
+* removing y label and y tick labels from the test matrices will resize them
+* looking at the tab through a mobile app should place train/test matrices one by one, actually helping with visualization
+
 ### Allow for invalid Hyper-parameter Combinations
 * used to be a significant roadblock
 * would have prevented an important educational component - errors

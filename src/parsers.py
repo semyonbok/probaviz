@@ -275,4 +275,4 @@ def parse_model_desc(model, convert_rst_roles: bool = True) -> str:
     if convert_rst_roles:
         desc = rst_roles_to_markdown(desc)
 
-    return f"```python\n{repr(model)}\n``` \n\n{desc}"
+    return f"\n\n{desc}"
