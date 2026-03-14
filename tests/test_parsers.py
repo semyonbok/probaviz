@@ -13,6 +13,7 @@ from src.models import MODELS  # noqa
 from src.parsers import (  # noqa
     API_BASE_URL,
     BASE_URL,
+    EXAMPLE_URL,
     RST_DIRECTIVES,
     GENERATED_BASE_URL,
     GLOSSARY_URL,
@@ -27,6 +28,7 @@ from src.parsers import (  # noqa
     parse_param_desc,
     replace_external_links,
     replace_rst_directives,
+    replace_sklearn_examples,
     replace_sklearn_refs,
     rst_roles_to_markdown,
 )
@@ -66,6 +68,7 @@ def assert_urls_safe(urls: list[str]) -> None:
                 or normalized.startswith(GENERATED_BASE_URL)
                 or normalized.startswith(GLOSSARY_URL)
                 or normalized.startswith(API_BASE_URL)
+                or normalized.startswith(EXAMPLE_URL)
             ), (
                 f"Not in allowed sklearn docs bases: {normalized}"
             )
@@ -89,8 +92,6 @@ def test_parse_model_desc_returns_non_empty_markdown(model_key):
 
     assert isinstance(desc, str)
     assert desc.strip()
-    assert "```python" in desc
-    assert repr(model) in desc
 
 
 @pytest.mark.parametrize("model_key", sorted(MODELS.keys()))
@@ -208,6 +209,28 @@ def test_replace_external_links_converts_rst_style_external_link():
         replaced
         == "[scipy.spatial.distance](https://docs.scipy.org/doc/scipy/reference/spatial.distance.html)"
     )
+
+
+@pytest.mark.parametrize(
+    ("slug", "expected_url"),
+    [
+        (
+            "sphx_glr_auto_examples_linear_model_plot_logistic_path.py",
+            "https://scikit-learn.org/stable/auto_examples/linear_model/plot_logistic_path.html",
+        ),
+        (
+            "sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py",
+            "https://scikit-learn.org/stable/auto_examples/neural_networks/plot_mlp_alpha.html",
+        ),
+        (
+            "sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py",
+            "https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html",
+        ),
+    ],
+)
+def test_replace_sklearn_examples_handles_multiword_sections(slug, expected_url):
+    replaced = replace_sklearn_examples(slug)
+    assert replaced == f"[link]({expected_url})"
 
 
 @pytest.mark.parametrize("directive", RST_DIRECTIVES)

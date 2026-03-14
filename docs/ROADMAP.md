@@ -3,10 +3,10 @@
 ## 🏗️ Ongoing Work
 
 ### 🧱 Project Setup & Structure
-- [X] Update repo README file
-- [ ] Finalize and clean `requirements.txt`
 - [ ] ⭐ Publish app on Streamlit Community Cloud
 - [ ] ⭐ Add “Open in Streamlit” badge
+- [ ] Finalize and clean `requirements.txt`
+- [X] Update repo README file
 
 ### 🎓 Learning & Tools
 - [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
@@ -18,21 +18,27 @@
   - [ ] Try CLI
 
 ### 📊 Data Handling
-- [X] Binary/multiclass toy datasets
 - [ ] ⭐ Synthetic data generation
-- [X] Train/test data split
 - [ ] Decide on whether cashing datasets is needed at all
+- [X] Binary/multiclass toy datasets
+- [X] Train/test data split
 
 ### 📈 Metrics & Evaluation
-- [X] Modify confusion/error matrix visualization
 - [ ] ⭐ ROC curves
 - [ ] ⭐ Precision–Recall curves
 - [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
 - [ ] Calibration display for binary classification
 - [ ] Learning curve
+- [X] Modify confusion/error matrix visualization
 
 ### 🎛️ Model & Interaction Features
 - [ ] ⭐ Reset model button
+- [ ] Allow kernel customization for `GaussianProcessClassifier` 
+- [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
+- [ ] Add meta ensemble models (voting, stacking, etc.)
+- [ ] Add feature pre-processing
+- [ ] Output (some) model attributes (post-learning parameters with "_" suffix)
+- [ ] Add classifiers from other frameworks
 - [X] Ensure switching model resets widgets
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [X] Add all "standalone" scikit-learn classifiers:
@@ -62,24 +68,34 @@
   - [X] `sklearn.naive_bayes.CategoricalNB`
   - [X] `sklearn.semi_supervised.LabelPropagation`
   - [X] `sklearn.semi_supervised.LabelSpreading`
-- [ ] Allow kernel customization for `GaussianProcessClassifier` 
-- [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
-- [ ] Add meta ensemble models (voting, stacking, etc.)
-- [ ] Add feature pre-processing
-- [ ] Output (some) model attributes (post-learning parameters with "_" suffix)
-- [ ] Add classifiers from other frameworks
 
 ### 🧩 UI / UX Improvements
+- [ ] ⭐ Dedicated help/info toggles for all data visualization tabs
+- [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 - [ ] Migrate to a more interactive plotting framework like `plotly` 
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
-- [ ] ⭐ Dedicated help/info toggles for all data visualization tabs
-- [X] Move model params out of contour plot title
-- [X] Standardize widget generation patterns (model registry?)
-- [X] Allow for optional selection of `random_state`
 - [ ] Add deprecated badge against affected hyper-parameters
-- [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
-- [ ] Improve model / parameter parser
+- [ ] Add dedicated model description definitions
+- [ ] Balloons when a 100% metric reached on a test subset
+- [ ] Improve model / parameter parsing
+  - [ ] model info expander improvements
+    - [ ] in the code snippet, also give model import statement
+    - [ ] include more model details (e.g., Attributes, Notes)
+    - [ ] turn section names into subheaders
+  - [ ] instead of caching with JSON, consider caching at runtime with `streamlit`:
+    ```python
+    @st.cache_data
+    def get_model_desc(model_key: str) -> str:
+        model = MODELS[model_key].factory()
+        return parse_model_desc(model)
+
+    @st.cache_data
+    def get_param_desc(model_key: str) -> dict[str, str]:
+        model = MODELS[model_key].factory()
+        return parse_param_desc(model)
+    ```
+  - [ ] turn model names into links to `class` documentation
   - [X] replace restructured text with markdown links (there are also arxiv and doi roles):
     - [X] ref
     - [X] term
@@ -99,39 +115,23 @@
     - [X] ('signature', 1)
     - [X] ('are', 1)
   - [X] replace external links like: scipy.spatial.distance     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>
-  - [ ] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
-  - [ ] model info expander improvements
-    - [ ] in the code snippet, also give model import statement
-    - [ ] include more model details (e.g., Attributes, Notes)
-    - [ ] turn section names into subheaders
-  - [ ] turn model names into links to documentation
+  - [X] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
   - [X] link validation
   - [X] simply cache processed model/params markdown
-  - [ ] instead of caching with JSON, consider caching at runtime with `streamlit`:
-    ```python
-    @st.cache_data
-    def get_model_desc(model_key: str) -> str:
-        model = MODELS[model_key].factory()
-        return parse_model_desc(model)
-
-    @st.cache_data
-    def get_param_desc(model_key: str) -> dict[str, str]:
-        model = MODELS[model_key].factory()
-        return parse_param_desc(model)
-    ```
-- [ ] Add dedicated model description definitions
-- [ ] Balloons when a 100% metric reached on a test subset
-- [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
+- [X] Move model params out of contour plot title
+- [X] Standardize widget generation patterns (model registry?)
+- [X] Allow for optional selection of `random_state`
+- [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
 
 ### 🧠 GenAI Component
 - [ ] ⭐ LLM component reacting to user's most recent change (explain what changed / why)
 
 ### 🧹 Code Quality & Refactoring
+- [ ] Add/update docstrings in viz.py
+- [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
+- [ ] Add app tests
 - [X] Create dedicated `parsers.py` module
 - [X] Resolve reuse issues when switching datasets (e.g. `None → toy → None`)
 - [X] Refactor toward more Pythonic code (properties, clearer APIs)
 - [X] Improve efficiency through cashing predictions/reducing conversions
 - [X] Add `ProbaViz` tests
-- [ ] Add/update docstrings in viz.py
-- [ ] Add usage docstring in `viz.py` showing how to work with it in Jupyter
-- [ ] Add app tests

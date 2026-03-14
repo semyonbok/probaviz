@@ -5,6 +5,18 @@ BASE_URL = "https://scikit-learn.org/stable/modules/"
 GENERATED_BASE_URL = "https://scikit-learn.org/stable/modules/generated/"
 GLOSSARY_URL = "https://scikit-learn.org/stable/glossary.html"
 API_BASE_URL = "https://scikit-learn.org/stable/api/"
+EXAMPLE_URL = "https://scikit-learn.org/stable/auto_examples/"
+EXAMPLE_SECTIONS = (
+    "classification",
+    "decomposition",
+    "ensemble",
+    "linear_model",
+    "model_selection",
+    "neighbors",
+    "neural_networks",
+    "svm",
+    "tree",
+)
 SKLEARN_REF_MAP = {
     "accuracy_score": "model_evaluation.html#accuracy-score",
     "adaboost": "ensemble.html#adaboost",
@@ -48,6 +60,7 @@ SKLEARN_REF_MAP = {
     "tree": "tree.html#classification",
     "decision_trees": "tree.html#classification",
 }
+
 REF_WITH_TARGET_PATTERN = re.compile(r":ref:`([^`<>]+?)\s*<\s*([^>]+?)\s*>`")
 REF_SIMPLE_PATTERN = re.compile(r":ref:`([^`]+?)`")
 TERM_PATTERN = re.compile(r":term:`([^`]+?)`")
@@ -70,6 +83,9 @@ RST_DIRECTIVES = (
 )
 DIRECTIVE_START_PATTERN = re.compile(
     rf"^(\s*)\.\.\s*({'|'.join(RST_DIRECTIVES)})::\s*(.*)$"
+)
+EXAMPLE_PATTERN = re.compile(
+    rf"(sphx_glr_auto_examples_({'|'.join(EXAMPLE_SECTIONS)})_(.+?)\.py)"
 )
 
 
@@ -230,6 +246,17 @@ def replace_sklearn_funcs(text: str) -> str:
     return _replace_role(text, FUNC_PATTERN, _sklearn_target_link)
 
 
+def replace_sklearn_examples(text: str) -> str:
+    def replace_examples(match: re.Match[str]) -> str:
+        _, section, stem = match.groups()
+        return _markdown_link(
+            "link",
+            f"{EXAMPLE_URL}{section}/{stem}.html"
+        )
+
+    return EXAMPLE_PATTERN.sub(replace_examples, text)
+
+
 def rst_roles_to_markdown(text: str) -> str:
     text = replace_rst_directives(text)
     text = replace_external_links(text)
@@ -240,6 +267,7 @@ def rst_roles_to_markdown(text: str) -> str:
     text = replace_sklearn_objs(text)
     text = replace_sklearn_mods(text)
     text = replace_sklearn_funcs(text)
+    text = replace_sklearn_examples(text)
     return text
 
 
