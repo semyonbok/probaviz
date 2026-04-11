@@ -5,7 +5,7 @@ from sklearn.datasets import load_iris, load_wine, load_breast_cancer
 from src.viz import ProbaViz
 from src.widgets import none_or_widget
 from src.models import MODELS
-from src.parsers import parse_model_desc, parse_param_desc
+from src.parsers import parse_model_desc, parse_param_desc, format_sig_md
 from src.model_docs_cache import get_cached_model_docs, load_model_docs_cache
 
 
@@ -37,7 +37,7 @@ def load_cached_model_docs():
 
 def plot_matrices(tab_conf, tab_err):
     # confusion matrices
-    train_col, test_col = tab_conf.columns(2)
+    train_col, test_col = tab_conf.columns(2, gap="medium")
     train_col.subheader("Train Subset")
     train_col.pyplot(
         st.session_state["pv"].plot_matrices(
@@ -52,7 +52,7 @@ def plot_matrices(tab_conf, tab_err):
     )
 
     # error matrices
-    train_col, test_col = tab_err.columns(2)
+    train_col, test_col = tab_err.columns(2, gap="medium")
     train_col.subheader("Train Subset")
     train_col.pyplot(
         st.session_state["pv"].plot_matrices(
@@ -222,8 +222,8 @@ else:
     finally:
         with st.expander("Model Info", icon="ℹ️"):
             if model_pick is not None:
-                model_repr = f"```python\n{repr(model)}\n```"
+                model_sig = format_sig_md(model)
                 if cached_docs is not None:
-                    st.info(model_repr + model_desc)
+                    st.info(model_sig + model_desc)
                 else:
-                    st.info(model_repr + parse_model_desc(model))
+                    st.info(model_sig + parse_model_desc(model))

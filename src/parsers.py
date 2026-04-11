@@ -304,3 +304,10 @@ def parse_model_desc(model, convert_rst_roles: bool = True) -> str:
         desc = rst_roles_to_markdown(desc)
 
     return f"\n\n{desc}"
+
+
+def format_sig_md(model) -> str:
+    cls = type(model)
+    mod = ".".join(cls.__module__.split(".")[:2])
+    imp = f"from {mod} import {cls.__name__}"
+    return f"```python\n{imp}\n\nmodel = {repr(model)}\n```"

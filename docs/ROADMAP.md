@@ -9,13 +9,19 @@
 - [X] Update repo README file
 
 ### 🎓 Learning & Tools
-- [ ] Explore latest capabilities of  `sklearn.inspection.DecisionBoundaryDisplay`
-- [ ] Deep-dive into sklearn classification metrics (skolar, user docs)
+- [ ] Deep-dive into sklearn documentation:
+  - [X] Model Evaluation, Metrics & Scorers at [Skolar](https://skolar.probabl.ai/en/a/6004069601880409583;p=1,1006594772100055529;pa=0)
+  - [X] Metrics and scoring: quantifying the quality of predictions at [User Guide](https://scikit-learn.org/stable/modules/model_evaluation.html)
+  - [X] Multiclass Receiver Operating Characteristic (ROC) at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html)
+  - [ ] Precision-Recal at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
+  - [ ] `sklearn.inspection.DecisionBoundaryDisplay`
 - [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
 - [ ] Re-read Groq Documentation
 - [X] Familiarise with and try Codex
   - [ ] Set up and run a Cloud env to implement a feature
   - [ ] Try CLI
+- [ ] Agentic AI course
+- [ ] Check out Andrew's Ng Context Hub
 
 ### 📊 Data Handling
 - [ ] ⭐ Synthetic data generation
@@ -32,7 +38,7 @@
 - [X] Modify confusion/error matrix visualization
 
 ### 🎛️ Model & Interaction Features
-- [ ] ⭐ Reset model button
+- [ ] Reset model button
 - [ ] Allow kernel customization for `GaussianProcessClassifier` 
 - [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
 - [ ] Add meta ensemble models (voting, stacking, etc.)
@@ -80,9 +86,10 @@
 - [ ] Balloons when a 100% metric reached on a test subset
 - [ ] Improve model / parameter parsing
   - [ ] model info expander improvements
-    - [ ] in the code snippet, also give model import statement
+    - [ ] turn model name into link to `class` documentation
     - [ ] include more model details (e.g., Attributes, Notes)
     - [ ] turn section names into subheaders
+    - [X] in the code snippet, also give model import statement
   - [ ] instead of caching with JSON, consider caching at runtime with `streamlit`:
     ```python
     @st.cache_data
@@ -95,7 +102,6 @@
         model = MODELS[model_key].factory()
         return parse_param_desc(model)
     ```
-  - [ ] turn model names into links to `class` documentation
   - [X] replace restructured text with markdown links (there are also arxiv and doi roles):
     - [X] ref
     - [X] term
