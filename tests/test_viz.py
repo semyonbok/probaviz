@@ -25,6 +25,7 @@ class CountingSVC(SVC):
         super().__init__(C=C, probability=True)
         self.fit_count = 0
         self.predict_count = 0
+        self.predict_proba_count = 0
 
     def fit(self, X, y):
         self.fit_count += 1
@@ -34,6 +35,10 @@ class CountingSVC(SVC):
         self.predict_count += 1
         return super().predict(X)
 
+    def predict_proba(self, X):
+        self.predict_proba_count += 1
+        return super().predict_proba(X)
+
 
 @pytest.fixture
 def binary_dataset():
@@ -41,6 +46,12 @@ def binary_dataset():
     data = iris["data"].iloc[:100].copy()
     target = iris["target"].iloc[:100].to_numpy()
     return data, target
+
+
+@pytest.fixture
+def multiclass_dataset():
+    iris = load_iris(as_frame=True)
+    return iris["data"].copy(), iris["target"].to_numpy()
 
 
 def test_validation_length_mismatch(binary_dataset):
@@ -200,6 +211,25 @@ def test_plot_matrices_does_not_refit_if_already_clean(binary_dataset):
     plt.close(fig)
 
     assert model.fit_count == fit_count_after_fit
+
+
+def test_plot_roc_reuses_cached_probabilities_when_clean(binary_dataset):
+    data, target = binary_dataset
+    model = CountingSVC()
+    viz = ProbaViz(model=model, data=data, target=target, features=[0, 1])
+
+    viz.fit()
+    predict_proba_count_after_fit = model.predict_proba_count
+
+    fig = viz.plot_roc(return_fig=True, mode="micro_macro")
+    assert fig is not None
+    plt.close(fig)
+
+    fig = viz.plot_roc(return_fig=True, mode="class")
+    assert fig is not None
+    plt.close(fig)
+
+    assert model.predict_proba_count == predict_proba_count_after_fit
 
 
 def test_update_params_invalidates_prediction_cache(binary_dataset):
@@ -383,12 +413,28 @@ def test_plot_matrices_without_model_raises(binary_dataset):
         viz.plot_matrices()
 
 
+def test_plot_roc_without_model_raises(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(data=data, target=target, features=[0, 1])
+
+    with pytest.raises(ValueError, match="model must be set"):
+        viz.plot_roc()
+
+
 def test_plot_matrices_invalid_mode_raises(binary_dataset):
     data, target = binary_dataset
     viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
 
     with pytest.raises(ValueError, match="mode must be either"):
         viz.plot_matrices(mode="oops")  # type: ignore[arg-type]
+
+
+def test_plot_roc_invalid_mode_raises(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    with pytest.raises(ValueError, match="mode must be either"):
+        viz.plot_roc(mode="oops")  # type: ignore[arg-type]
 
 
 def test_plot_return_fig_false_returns_none(binary_dataset):
@@ -403,6 +449,60 @@ def test_plot_matrices_return_fig_false_returns_none(binary_dataset):
     viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
 
     assert viz.plot_matrices(return_fig=False, mode="confusion") is None
+
+
+def test_plot_roc_return_fig_false_returns_none(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    assert viz.plot_roc(return_fig=False, mode="micro_macro") is None
+
+
+def test_plot_roc_binary_styles_and_limits(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    fig = viz.plot_roc(return_fig=True, mode="class")
+    assert fig is not None
+
+    axes = fig.axes[0]
+    assert axes.get_xlim() == pytest.approx((-0.1, 1.1))
+    assert axes.get_ylim() == pytest.approx((-0.1, 1.1))
+    assert axes.get_legend() is not None
+    assert "AUC =" in axes.get_legend().get_texts()[0].get_text()
+
+    plt.close(fig)
+
+
+def test_plot_roc_multiclass_has_micro_macro_curves(multiclass_dataset):
+    data, target = multiclass_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    fig = viz.plot_roc(return_fig=True, mode="micro_macro", data_split="test")
+    assert fig is not None
+
+    axes = fig.axes[0]
+    labels = [line.get_label() for line in axes.lines]
+    assert any("Macro-average" in label for label in labels)
+    assert any("Micro-average" in label for label in labels)
+
+    plt.close(fig)
+
+
+def test_plot_roc_multiclass_class_mode_has_one_curve_per_class(multiclass_dataset):
+    data, target = multiclass_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    fig = viz.plot_roc(return_fig=True, mode="class", data_split="test")
+    assert fig is not None
+
+    axes = fig.axes[0]
+    curve_labels = [
+        line.get_label() for line in axes.lines if "vs Rest" in line.get_label()
+    ]
+    assert len(curve_labels) == len(viz.classes)
+
+    plt.close(fig)
 
 
 def test_streamlit_like_smoke_flow(binary_dataset):
@@ -420,5 +520,13 @@ def test_streamlit_like_smoke_flow(binary_dataset):
     plt.close(fig)
 
     fig = viz.plot_matrices(return_fig=True, mode="error")
+    assert fig is not None
+    plt.close(fig)
+
+    fig = viz.plot_roc(return_fig=True, mode="micro_macro")
+    assert fig is not None
+    plt.close(fig)
+
+    fig = viz.plot_roc(return_fig=True, mode="class", data_split="test")
     assert fig is not None
     plt.close(fig)

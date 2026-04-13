@@ -16,7 +16,7 @@ import pandas as pd
 from matplotlib.legend_handler import HandlerTuple
 from matplotlib.lines import Line2D
 from sklearn.base import is_classifier
-from sklearn.metrics import ConfusionMatrixDisplay, f1_score
+from sklearn.metrics import ConfusionMatrixDisplay, auc, f1_score, roc_curve
 from sklearn.model_selection import train_test_split
 
 plt.style.use("seaborn-v0_8-ticks")
@@ -76,6 +76,8 @@ class ProbaViz:
         self._test_target: np.ndarray = np.empty(0)
         self._train_predictions: np.ndarray | None = None
         self._test_predictions: np.ndarray | None = None
+        self._train_predict_proba: np.ndarray | None = None
+        self._test_predict_proba: np.ndarray | None = None
         self._prediction_cache_valid = False
         self._is_dirty = True
         self._is_fitted = False
@@ -378,6 +380,8 @@ class ProbaViz:
         self._test_target = test_target_arr
         self._train_predictions = None
         self._test_predictions = None
+        self._train_predict_proba = None
+        self._test_predict_proba = None
         self._prediction_cache_valid = False
         self._grid_res = active_grid
         self._build_mesh()
@@ -409,6 +413,12 @@ class ProbaViz:
             self._model.fit(self._train_xy, self._train_target)
             self._train_predictions = self._model.predict(self._train_xy)
             self._test_predictions = self._model.predict(self._test_xy)
+            if hasattr(self._model, "predict_proba"):
+                self._train_predict_proba = self._model.predict_proba(self._train_xy)
+                self._test_predict_proba = self._model.predict_proba(self._test_xy)
+            else:
+                self._train_predict_proba = None
+                self._test_predict_proba = None
             self._prediction_cache_valid = True
             self._is_fitted = True
             self._is_dirty = False
@@ -424,6 +434,85 @@ class ProbaViz:
             self._test_predictions = self.model.predict(self._test_xy)
             self._prediction_cache_valid = True
         return self._test_predictions  # type: ignore
+
+    def _get_train_predict_proba(self) -> np.ndarray:
+        if self._train_predict_proba is None:
+            self._train_predict_proba = self.model.predict_proba(self._train_xy)
+        return self._train_predict_proba
+
+    def _get_test_predict_proba(self) -> np.ndarray:
+        if self._test_predict_proba is None:
+            self._test_predict_proba = self.model.predict_proba(self._test_xy)
+        return self._test_predict_proba
+
+    def _get_split_targets_and_scores(
+        self, data_split: Literal["train", "test"]
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if data_split == "train":
+            return self._train_target, self._get_train_predict_proba()
+        if data_split == "test":
+            return self._test_target, self._get_test_predict_proba()
+        raise ValueError("data_split must be either 'train' or 'test'")
+
+    def _compute_roc_curves(
+        self, y_true: np.ndarray, y_score: np.ndarray
+    ) -> tuple[
+        dict[Any, np.ndarray],
+        dict[Any, np.ndarray],
+        dict[Any, np.ndarray],
+        dict[Any, float],
+        np.ndarray,
+        np.ndarray,
+        float,
+        np.ndarray,
+        np.ndarray,
+        float,
+    ]:
+        fpr: dict[Any, np.ndarray] = {}
+        tpr: dict[Any, np.ndarray] = {}
+        thresholds: dict[Any, np.ndarray] = {}
+        roc_auc: dict[Any, float] = {}
+
+        y_true_bin = np.column_stack([y_true == current_class for current_class in self.classes])
+        y_true_bin = y_true_bin.astype(int)
+
+        for index, current_class in enumerate(self.classes):
+            fpr[current_class], tpr[current_class], thresholds[current_class] = roc_curve(
+                y_true_bin[:, index], y_score[:, index]
+            )
+            roc_auc[current_class] = auc(fpr[current_class], tpr[current_class])
+
+        micro_fpr, micro_tpr, _ = roc_curve(y_true_bin.ravel(), y_score.ravel())
+        micro_auc = auc(micro_fpr, micro_tpr)
+
+        all_fpr = np.unique(np.concatenate([fpr[current_class] for current_class in self.classes]))
+        mean_tpr = np.zeros_like(all_fpr)
+        for current_class in self.classes:
+            mean_tpr += np.interp(all_fpr, fpr[current_class], tpr[current_class])
+        mean_tpr /= len(self.classes)
+        macro_auc = auc(all_fpr, mean_tpr)
+
+        return (
+            fpr,
+            tpr,
+            thresholds,
+            roc_auc,
+            micro_fpr,
+            micro_tpr,
+            micro_auc,
+            all_fpr,
+            mean_tpr,
+            macro_auc,
+        )
+
+    def _style_roc_axes(self, axes: plt.Axes) -> None:
+        axes.set_xlim(-0.1, 1.1)
+        axes.set_ylim(-0.1, 1.1)
+        axes.set_aspect("equal", adjustable="box")
+        axes.set_xlabel("False Positive Rate")
+        axes.set_ylabel("True Positive Rate")
+        axes.grid(True, alpha=0.25)
+        axes.plot([0, 1], [0, 1], color="0.5", linestyle=":", linewidth=1.5, label="_nolegend_")
 
     def plot(
         self,
@@ -654,6 +743,93 @@ class ProbaViz:
                 im_kw={"vmin": 0, "vmax": 1},
             )
             axes[2].set_title("Normalized by Column")
+
+        if return_fig:
+            return fig
+        return None
+
+    def plot_roc(
+        self,
+        return_fig: bool = False,
+        data_split: Literal["train", "test"] = "train",
+        mode: Literal["micro_macro", "class"] = "micro_macro",
+        fig_size: Tuple[int, int] = (8, 8),
+    ) -> Optional[plt.Figure]:
+        """
+        Plot split-specific ROC curves for micro/macro aggregates or per-class
+        one-vs-rest comparisons.
+        """
+        self._ensure_fitted_for_plot(require_predict_proba=True)
+        y_true, y_score = self._get_split_targets_and_scores(data_split)
+
+        (
+            fpr,
+            tpr,
+            thresholds,
+            roc_auc,
+            micro_fpr,
+            micro_tpr,
+            micro_auc,
+            macro_fpr,
+            macro_tpr,
+            macro_auc,
+        ) = self._compute_roc_curves(y_true, y_score)
+
+        with plt.rc_context({"font.size": self.FS}):
+            fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
+            self._style_roc_axes(axes)
+
+            if mode == "micro_macro":
+                axes.plot(
+                    macro_fpr,
+                    macro_tpr,
+                    color="k",
+                    linestyle="-",
+                    linewidth=2.5,
+                    label=f"Macro-average (AUC = {macro_auc:.3f})",
+                )
+                axes.plot(
+                    micro_fpr,
+                    micro_tpr,
+                    color="k",
+                    linestyle="--",
+                    linewidth=2.5,
+                    label=f"Micro-average (AUC = {micro_auc:.3f})",
+                )
+                axes.set_title("Micro / Macro ROC Curves")
+            elif mode == "class":
+                for index, current_class in enumerate(self.classes):
+                    cmap_name = CMAP_COLORS[index % len(CMAP_COLORS)]
+                    cmap = plt.get_cmap(cmap_name)
+                    line_color = cmap(0.75)
+                    marker_style = MARKER_STYLES[index % len(MARKER_STYLES)]
+
+                    axes.plot(
+                        fpr[current_class],
+                        tpr[current_class],
+                        color=line_color,
+                        linewidth=2.0,
+                        marker=marker_style,
+                        markevery=max(1, len(fpr[current_class]) // 8),
+                        label=f"{current_class} (AUC = {roc_auc[current_class]:.3f})",
+                    )
+                    axes.scatter(
+                        fpr[current_class],
+                        tpr[current_class],
+                        c=np.clip(thresholds[current_class], 0.0, 1.0),
+                        zorder=3,
+                        cmap=cmap,
+                        edgecolor="k",
+                        vmin=0,
+                        vmax=1,
+                        marker=marker_style,
+                        s=70,
+                    )
+                axes.set_title("Class-vs-Rest ROC Curves")
+            else:
+                raise ValueError("mode must be either 'micro_macro' or 'class'")
+
+            axes.legend(loc="lower right")
 
         if return_fig:
             return fig

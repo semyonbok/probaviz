@@ -67,6 +67,34 @@ def plot_matrices(tab_conf, tab_err):
     )
 
 
+def plot_rocs(tab_roc):
+    train_col, test_col = tab_roc.columns(2, gap="medium")
+
+    train_col.subheader("Train Subset")
+    train_col.pyplot(
+        st.session_state["pv"].plot_roc(
+            return_fig=True, fig_size=(9, 9), mode="class"
+        )
+    )
+    train_col.pyplot(
+        st.session_state["pv"].plot_roc(
+            return_fig=True, fig_size=(9, 9), mode="micro_macro"
+        )
+    )
+
+    test_col.subheader("Test Subset")
+    test_col.pyplot(
+        st.session_state["pv"].plot_roc(
+            return_fig=True, fig_size=(9, 9), data_split="test", mode="class"
+        )
+    )
+    test_col.pyplot(
+        st.session_state["pv"].plot_roc(
+            return_fig=True, fig_size=(9, 9), data_split="test", mode="micro_macro"
+        )
+    )
+
+
 # main display space
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
@@ -201,8 +229,8 @@ else:
         st.session_state["pv"].model = model
         st.session_state["pv"].update_params(**hp)
 
-        tab_contour, tab_conf, tab_err = st.tabs(
-            ["Decision Boundary", "Confusion Matrices", "Error Matrices"]
+        tab_contour, tab_conf, tab_err, tab_roc = st.tabs(
+            ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves"]
         )
         tab_contour.pyplot(
             st.session_state["pv"].plot(
@@ -210,6 +238,7 @@ else:
             )
         )
         plot_matrices(tab_conf, tab_err)
+        plot_rocs(tab_roc)
     except AttributeError:
         tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
@@ -217,6 +246,10 @@ else:
             "Estimates for support vector machines) or refer to documentation."
         )
         plot_matrices(tab_conf, tab_err)
+        tab_roc.error(
+            "❌ **ROC curves are unavailable for this model configuration.** "
+            "This view requires `predict_proba` support."
+        )
     except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
     finally:
