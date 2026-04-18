@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import streamlit as st
 
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
@@ -35,6 +38,12 @@ def load_cached_model_docs():
     return load_model_docs_cache()
 
 
+@st.cache_data
+def load_tab_explainers():
+    payload = json.loads(Path("src/tab_explainers.json").read_text())
+    return payload["tabs"]
+
+
 def plot_matrices(tab_conf, tab_err):
     # confusion matrices
     train_col, test_col = tab_conf.columns(2, gap="medium")
@@ -68,6 +77,7 @@ def plot_matrices(tab_conf, tab_err):
 
 
 def plot_rocs(tab_roc):
+    roc_explainer = load_tab_explainers()["roc_curves"]
     train_col, test_col = tab_roc.columns(2, gap="medium")
 
     train_col.subheader("Train Subset")
@@ -93,6 +103,11 @@ def plot_rocs(tab_roc):
             return_fig=True, fig_size=(9, 9), data_split="test", mode="micro_macro"
         )
     )
+
+    with tab_roc.expander(roc_explainer["title"], icon=roc_explainer["icon"]):
+        st.info(
+            roc_explainer["body_markdown"]
+        )
 
 
 # main display space

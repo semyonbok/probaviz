@@ -19,7 +19,7 @@
 - [ ] Re-read Groq Documentation
 - [X] Familiarise with and try Codex
   - [ ] Set up and run a Cloud env to implement a feature
-  - [ ] Try CLI
+  - [X] Try CLI
 - [ ] Agentic AI course
 - [ ] Check out Andrew's Ng Context Hub
 
@@ -30,7 +30,7 @@
 - [X] Train/test data split
 
 ### 📈 Metrics & Evaluation
-- [ ] ⭐ ROC curves
+- [X] ROC curves
 - [ ] ⭐ Precision–Recall curves
 - [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
 - [ ] Calibration display for binary classification

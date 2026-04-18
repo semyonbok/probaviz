@@ -497,10 +497,11 @@ def test_plot_roc_multiclass_class_mode_has_one_curve_per_class(multiclass_datas
     assert fig is not None
 
     axes = fig.axes[0]
-    curve_labels = [
-        line.get_label() for line in axes.lines if "vs Rest" in line.get_label()
-    ]
+    legend = axes.get_legend()
+    assert legend is not None
+    curve_labels = [text.get_text() for text in legend.get_texts()]
     assert len(curve_labels) == len(viz.classes)
+    assert all("AUC =" in label for label in curve_labels)
 
     plt.close(fig)
 
