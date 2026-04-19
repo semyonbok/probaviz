@@ -52,6 +52,10 @@ class ProbaViz:
     """
 
     FS = 22
+    _pr_f1_recall_grid: np.ndarray | None = None
+    _pr_f1_precision_grid: np.ndarray | None = None
+    _pr_f1_surface: np.ndarray | None = None
+    _pr_f1_levels = np.array([0.2, 0.4, 0.6, 0.8])
 
     def __init__(
         self,
@@ -90,6 +94,7 @@ class ProbaViz:
         self._is_fitted = False
         self.auto_fit = auto_fit
 
+        self._ensure_pr_f1_cache()
         self.grid_res = grid_res
 
         if data is not None or target is not None or features is not None:
@@ -577,6 +582,45 @@ class ProbaViz:
             prevalence,
         )
 
+    @classmethod
+    def _ensure_pr_f1_cache(cls) -> None:
+        if (
+            cls._pr_f1_recall_grid is not None
+            and cls._pr_f1_precision_grid is not None
+            and cls._pr_f1_surface is not None
+        ):
+            return
+
+        recall_axis = np.linspace(0.0, 1.0, 300)
+        precision_axis = np.linspace(0.0, 1.0, 300)
+        recall_grid, precision_grid = np.meshgrid(recall_axis, precision_axis)
+        denominator = precision_grid + recall_grid
+        f1_surface = np.divide(
+            2.0 * precision_grid * recall_grid,
+            denominator,
+            out=np.zeros_like(denominator),
+            where=denominator > 0.0,
+        )
+
+        cls._pr_f1_recall_grid = recall_grid
+        cls._pr_f1_precision_grid = precision_grid
+        cls._pr_f1_surface = f1_surface
+
+    def _plot_pr_f1_contours(self, axes: plt.Axes) -> None:
+        self._ensure_pr_f1_cache()
+        contour_set = axes.contour(
+            self._pr_f1_recall_grid,
+            self._pr_f1_precision_grid,
+            self._pr_f1_surface,
+            levels=self._pr_f1_levels,
+            colors="0.6",
+            linestyles="--",
+            linewidths=1.0,
+            alpha=0.5,
+            zorder=0,
+        )
+        axes.clabel(contour_set, inline=True, fontsize=max(10, self.FS // 2), fmt="F1=%.1f")
+
     def _style_roc_axes(self, axes: plt.Axes) -> None:
         axes.set_xlim(-0.1, 1.1)
         axes.set_ylim(-0.1, 1.1)
@@ -946,6 +990,7 @@ class ProbaViz:
         with plt.rc_context({"font.size": self.FS}):
             fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
             self._style_pr_axes(axes)
+            self._plot_pr_f1_contours(axes)
 
             if mode == "micro_macro":
                 axes.plot(

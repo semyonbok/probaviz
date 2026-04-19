@@ -530,6 +530,7 @@ def test_plot_pr_binary_styles_and_limits(binary_dataset):
     assert axes.get_ylabel() == "Precision"
     assert axes.get_legend() is not None
     assert "AP =" in axes.get_legend().get_texts()[0].get_text()
+    assert len(axes.collections) > 0
 
     plt.close(fig)
 
@@ -560,6 +561,7 @@ def test_plot_pr_multiclass_has_micro_macro_curves(multiclass_dataset):
     labels = [line.get_label() for line in axes.lines]
     assert any("Macro-average" in label for label in labels)
     assert any("Micro-average" in label for label in labels)
+    assert len(axes.collections) > 0
 
     plt.close(fig)
 
@@ -594,8 +596,18 @@ def test_plot_pr_multiclass_class_mode_has_one_curve_per_class(multiclass_datase
     curve_labels = [text.get_text() for text in legend.get_texts()]
     assert len(curve_labels) == len(viz.classes)
     assert all("AP =" in label for label in curve_labels)
+    assert len(axes.collections) > 0
 
     plt.close(fig)
+
+
+def test_plot_pr_initializes_shared_f1_contour_cache(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    assert viz._pr_f1_recall_grid is not None
+    assert viz._pr_f1_precision_grid is not None
+    assert viz._pr_f1_surface is not None
 
 
 def test_streamlit_like_smoke_flow(binary_dataset):
