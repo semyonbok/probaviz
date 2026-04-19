@@ -31,8 +31,8 @@ Implementation requirements
   * right column: test-set ROC plots
 * Each column must contain exactly two plots:
 
-  * top: micro/macro ROC curves
-  * bottom: class-specific ROC curves
+  * top: class-specific ROC curves
+  * bottom: micro/macro ROC curves
 
 3. Supported scenarios
 

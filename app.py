@@ -40,7 +40,7 @@ def load_cached_model_docs():
 
 @st.cache_data
 def load_tab_explainers():
-    payload = json.loads(Path("src/tab_explainers.json").read_text())
+    payload = json.loads((Path(__file__).resolve().parent / "src" / "tab_explainers.json").read_text())
     return payload["tabs"]
 
 
@@ -107,6 +107,40 @@ def plot_rocs(tab_roc):
     with tab_roc.expander(roc_explainer["title"], icon=roc_explainer["icon"]):
         st.info(
             roc_explainer["body_markdown"]
+        )
+
+
+def plot_prs(tab_pr):
+    pr_explainer = load_tab_explainers()["precision_recall_curves"]
+    train_col, test_col = tab_pr.columns(2, gap="medium")
+
+    train_col.subheader("Train Subset")
+    train_col.pyplot(
+        st.session_state["pv"].plot_pr(
+            return_fig=True, fig_size=(9, 9), mode="class"
+        )
+    )
+    train_col.pyplot(
+        st.session_state["pv"].plot_pr(
+            return_fig=True, fig_size=(9, 9), mode="micro_macro"
+        )
+    )
+
+    test_col.subheader("Test Subset")
+    test_col.pyplot(
+        st.session_state["pv"].plot_pr(
+            return_fig=True, fig_size=(9, 9), data_split="test", mode="class"
+        )
+    )
+    test_col.pyplot(
+        st.session_state["pv"].plot_pr(
+            return_fig=True, fig_size=(9, 9), data_split="test", mode="micro_macro"
+        )
+    )
+
+    with tab_pr.expander(pr_explainer["title"], icon=pr_explainer["icon"]):
+        st.info(
+            pr_explainer["body_markdown"]
         )
 
 
@@ -244,8 +278,8 @@ else:
         st.session_state["pv"].model = model
         st.session_state["pv"].update_params(**hp)
 
-        tab_contour, tab_conf, tab_err, tab_roc = st.tabs(
-            ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves"]
+        tab_contour, tab_conf, tab_err, tab_roc, tab_pr = st.tabs(
+            ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves", "PR Curves"]
         )
         tab_contour.pyplot(
             st.session_state["pv"].plot(
@@ -254,6 +288,7 @@ else:
         )
         plot_matrices(tab_conf, tab_err)
         plot_rocs(tab_roc)
+        plot_prs(tab_pr)
     except AttributeError:
         tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
@@ -263,6 +298,10 @@ else:
         plot_matrices(tab_conf, tab_err)
         tab_roc.error(
             "❌ **ROC curves are unavailable for this model configuration.** "
+            "This view requires `predict_proba` support."
+        )
+        tab_pr.error(
+            "❌ **Precision-recall curves are unavailable for this model configuration.** "
             "This view requires `predict_proba` support."
         )
     except (ValueError, NotImplementedError) as e:

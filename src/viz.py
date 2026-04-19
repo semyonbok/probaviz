@@ -16,7 +16,14 @@ import pandas as pd
 from matplotlib.legend_handler import HandlerTuple
 from matplotlib.lines import Line2D
 from sklearn.base import is_classifier
-from sklearn.metrics import ConfusionMatrixDisplay, auc, f1_score, roc_curve
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    auc,
+    average_precision_score,
+    f1_score,
+    precision_recall_curve,
+    roc_curve,
+)
 from sklearn.model_selection import train_test_split
 
 plt.style.use("seaborn-v0_8-ticks")
@@ -505,6 +512,71 @@ class ProbaViz:
             macro_auc,
         )
 
+    def _binarize_targets(self, y_true: np.ndarray) -> np.ndarray:
+        y_true_bin = np.column_stack([y_true == current_class for current_class in self.classes])
+        return y_true_bin.astype(int)
+
+    def _compute_precision_recall_curves(
+        self, y_true: np.ndarray, y_score: np.ndarray
+    ) -> tuple[
+        dict[Any, np.ndarray],
+        dict[Any, np.ndarray],
+        dict[Any, np.ndarray],
+        dict[Any, float],
+        np.ndarray,
+        np.ndarray,
+        float,
+        np.ndarray,
+        np.ndarray,
+        float,
+        float,
+    ]:
+        precision: dict[Any, np.ndarray] = {}
+        recall: dict[Any, np.ndarray] = {}
+        thresholds: dict[Any, np.ndarray] = {}
+        average_precision: dict[Any, float] = {}
+
+        y_true_bin = self._binarize_targets(y_true)
+
+        for index, current_class in enumerate(self.classes):
+            precision[current_class], recall[current_class], thresholds[current_class] = (
+                precision_recall_curve(y_true_bin[:, index], y_score[:, index])
+            )
+            average_precision[current_class] = average_precision_score(
+                y_true_bin[:, index], y_score[:, index]
+            )
+
+        micro_precision, micro_recall, _ = precision_recall_curve(
+            y_true_bin.ravel(), y_score.ravel()
+        )
+        micro_average_precision = average_precision_score(
+            y_true_bin, y_score, average="micro"
+        )
+
+        macro_recall = np.linspace(0.0, 1.0, 200)
+        mean_precision = np.zeros_like(macro_recall)
+        for current_class in self.classes:
+            class_recall = recall[current_class][::-1]
+            class_precision = precision[current_class][::-1]
+            mean_precision += np.interp(macro_recall, class_recall, class_precision)
+        mean_precision /= len(self.classes)
+        macro_average_precision = auc(macro_recall, mean_precision)
+        prevalence = float(y_true_bin.mean())
+
+        return (
+            precision,
+            recall,
+            thresholds,
+            average_precision,
+            micro_precision,
+            micro_recall,
+            micro_average_precision,
+            mean_precision,
+            macro_recall,
+            macro_average_precision,
+            prevalence,
+        )
+
     def _style_roc_axes(self, axes: plt.Axes) -> None:
         axes.set_xlim(-0.1, 1.1)
         axes.set_ylim(-0.1, 1.1)
@@ -513,6 +585,14 @@ class ProbaViz:
         axes.set_ylabel("True Positive Rate")
         axes.grid(True, alpha=0.25)
         axes.plot([0, 1], [0, 1], color="0.5", linestyle=":", linewidth=1.5, label="_nolegend_")
+
+    def _style_pr_axes(self, axes: plt.Axes) -> None:
+        axes.set_xlim(-0.1, 1.1)
+        axes.set_ylim(-0.1, 1.1)
+        axes.set_aspect("equal", adjustable="box")
+        axes.set_xlabel("Recall")
+        axes.set_ylabel("Precision")
+        axes.grid(True, alpha=0.25)
 
     def plot(
         self,
@@ -830,6 +910,102 @@ class ProbaViz:
                 raise ValueError("mode must be either 'micro_macro' or 'class'")
 
             axes.legend(loc="lower right")
+
+        if return_fig:
+            return fig
+        return None
+
+    def plot_pr(
+        self,
+        return_fig: bool = False,
+        data_split: Literal["train", "test"] = "train",
+        mode: Literal["micro_macro", "class"] = "micro_macro",
+        fig_size: Tuple[int, int] = (8, 8),
+    ) -> Optional[plt.Figure]:
+        """
+        Plot split-specific precision-recall curves for micro/macro aggregates
+        or per-class one-vs-rest comparisons.
+        """
+        self._ensure_fitted_for_plot(require_predict_proba=True)
+        y_true, y_score = self._get_split_targets_and_scores(data_split)
+
+        (
+            precision,
+            recall,
+            thresholds,
+            average_precision,
+            micro_precision,
+            micro_recall,
+            micro_average_precision,
+            macro_precision,
+            macro_recall,
+            macro_average_precision,
+            prevalence,
+        ) = self._compute_precision_recall_curves(y_true, y_score)
+
+        with plt.rc_context({"font.size": self.FS}):
+            fig, axes = plt.subplots(1, 1, figsize=fig_size, tight_layout=True)
+            self._style_pr_axes(axes)
+
+            if mode == "micro_macro":
+                axes.plot(
+                    macro_recall,
+                    macro_precision,
+                    color="k",
+                    linestyle="-",
+                    linewidth=2.5,
+                    label=f"Macro-average (AP = {macro_average_precision:.3f})",
+                )
+                axes.plot(
+                    micro_recall,
+                    micro_precision,
+                    color="k",
+                    linestyle="--",
+                    linewidth=2.5,
+                    label=f"Micro-average (AP = {micro_average_precision:.3f})",
+                )
+                axes.axhline(
+                    prevalence,
+                    color="0.5",
+                    linestyle=":",
+                    linewidth=1.5,
+                    label="_nolegend_",
+                )
+                axes.set_title("Micro / Macro Precision-Recall Curves")
+            elif mode == "class":
+                for index, current_class in enumerate(self.classes):
+                    cmap_name = CMAP_COLORS[index % len(CMAP_COLORS)]
+                    cmap = plt.get_cmap(cmap_name)
+                    line_color = cmap(0.75)
+                    marker_style = MARKER_STYLES[index % len(MARKER_STYLES)]
+
+                    axes.plot(
+                        recall[current_class],
+                        precision[current_class],
+                        color=line_color,
+                        linewidth=2.0,
+                        marker=marker_style,
+                        markevery=max(1, len(recall[current_class]) // 8),
+                        label=f"{current_class} (AP = {average_precision[current_class]:.3f})",
+                    )
+                    if len(thresholds[current_class]) > 0:
+                        axes.scatter(
+                            recall[current_class][1:],
+                            precision[current_class][1:],
+                            c=np.clip(thresholds[current_class], 0.0, 1.0),
+                            zorder=3,
+                            cmap=cmap,
+                            edgecolor="k",
+                            vmin=0,
+                            vmax=1,
+                            marker=marker_style,
+                            s=70,
+                        )
+                axes.set_title("Class-vs-Rest Precision-Recall Curves")
+            else:
+                raise ValueError("mode must be either 'micro_macro' or 'class'")
+
+            axes.legend(loc="lower left")
 
         if return_fig:
             return fig
