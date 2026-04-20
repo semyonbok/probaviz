@@ -4,6 +4,16 @@ from pathlib import Path
 import streamlit as st
 
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
+from sklearn.preprocessing import (
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+)
+from sklearn.pipeline import Pipeline
 
 from src.viz import ProbaViz
 from src.widgets import none_or_widget
@@ -15,7 +25,7 @@ from src.model_docs_cache import get_cached_model_docs, load_model_docs_cache
 # streamlit data processing functions
 def _on_dataset_change() -> None:
     """When dataset changes, reset everything derived from it"""
-    for k in ["pv", "data_and_config", "f1", "f2"]:
+    for k in ["pv", "data_config", "f1", "f2"]:
         st.session_state.pop(k, None)
 
 
@@ -42,6 +52,31 @@ def load_cached_model_docs():
 def load_tab_explainers():
     payload = json.loads((Path(__file__).resolve().parent / "src" / "tab_explainers.json").read_text())
     return payload["tabs"]
+
+
+def build_model_pipeline(model, scaling):
+    if model is None or scaling == "None":
+        return model
+
+    scaler = {
+        "Standardization": StandardScaler(),
+        "Min-Max": MinMaxScaler(),
+        "Robust": RobustScaler(),
+        "Max-Abs": MaxAbsScaler(),
+        "Power Transform": PowerTransformer(),
+        "Quantile Transform": QuantileTransformer(),
+        "Normalizer": Normalizer(),
+    }[scaling]
+    return Pipeline([
+        ("scaler", scaler),
+        ("model", model),
+    ])
+
+
+def prefix_model_params(params, scaling):
+    if scaling == "None":
+        return params
+    return {f"model__{name}": value for name, value in params.items()}
 
 
 def plot_matrices(tab_conf, tab_err):
@@ -190,6 +225,7 @@ with st.sidebar:
                     "Please choose an integer for reproducible output."
                 )
             )
+            data_config = (set_name, f1, f2, train_size, split_random_state)
             st.caption(
                 f"{data.shape[0]} samples | {data.shape[1]} features | "
                 f"{target.nunique()} classes"
@@ -199,7 +235,26 @@ with st.sidebar:
         pass
 
     st.divider()
-    st.subheader("Model")
+    st.subheader("Pipeline")
+    scaling = st.selectbox(
+        "Select Feature Scaling",
+        [
+            "None",
+            "Standardization",
+            "Min-Max",
+            "Robust",
+            "Max-Abs",
+            "Power Transform",
+            "Quantile Transform",
+            "Normalizer",
+        ],
+        help=(
+            "Optionally apply a preprocessing transform before fitting the model. "
+            "When enabled, the model is wrapped in a pipeline. "
+            "For more information, please refer to "
+            "[API Reference](https://scikit-learn.org/stable/api/sklearn.preprocessing.html)"
+        ),
+    )
     model_pick = st.selectbox("Select a Model", [None, *sorted(MODELS.keys())])
     model = MODELS[model_pick].factory() if model_pick else None
 
@@ -234,6 +289,7 @@ with st.sidebar:
     st.caption(f"Features: {f1 if set_name else '-'} vs {f2 if set_name else '-'}")
     st.caption(f"Split Random State: {split_random_state if set_name else '-'}")
     st.caption(f"Model: {model_pick or 'None'}")
+    st.caption(f"Preprocessing: {scaling}")
 
 # Session State and Plotting Logic
 # If data is None, don't plot anything
@@ -241,11 +297,11 @@ with st.sidebar:
 # if data and model are not None, plot contour
 if set_name is None:
     st.session_state.pop("pv", None)
-    st.session_state.pop("data_and_config", None)
+    st.session_state.pop("data_config", None)
     st.stop()
 
-if "data_and_config" not in st.session_state:
-    st.session_state["data_and_config"] = (set_name, f1, f2, train_size, split_random_state)
+if "data_config" not in st.session_state:
+    st.session_state["data_config"] = data_config
 
 # call `set_dataset` only when there is change in... data!
 if "pv" not in st.session_state:
@@ -257,8 +313,8 @@ if "pv" not in st.session_state:
         split_random_state=split_random_state,
         features=[f1, f2],
     )
-elif st.session_state["data_and_config"] != (set_name, f1, f2, train_size, split_random_state):
-    st.session_state["data_and_config"] = (set_name, f1, f2, train_size, split_random_state)
+elif st.session_state["data_config"] != data_config:
+    st.session_state["data_config"] = data_config
     st.session_state["pv"].set_dataset(
         data,
         target,
@@ -274,9 +330,10 @@ if model is None:
         )
     )
 else:
+    active_model = build_model_pipeline(model, scaling)
     try:
-        st.session_state["pv"].model = model
-        st.session_state["pv"].update_params(**hp)
+        st.session_state["pv"].model = active_model
+        st.session_state["pv"].update_params(**prefix_model_params(hp, scaling))
 
         tab_contour, tab_conf, tab_err, tab_roc, tab_pr = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves", "PR Curves"]
@@ -309,7 +366,7 @@ else:
     finally:
         with st.expander("Model Info", icon="ℹ️"):
             if model_pick is not None:
-                model_sig = format_sig_md(model)
+                model_sig = format_sig_md(active_model)
                 if cached_docs is not None:
                     st.info(model_sig + model_desc)
                 else:

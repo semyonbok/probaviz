@@ -5,6 +5,9 @@ import re
 import sys
 
 import pytest
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -26,6 +29,7 @@ from src.parsers import (  # noqa
     SKLEARN_REF_MAP,
     parse_model_desc,
     parse_param_desc,
+    format_sig_md,
     replace_external_links,
     replace_rst_directives,
     replace_sklearn_examples,
@@ -388,3 +392,26 @@ def test_parse_param_desc_opt_out_preserves_rst_role_markup():
     assert ":mod:`" in combined_raw
     assert ":func:`" in combined_raw
     assert ":ref:`" in combined_raw
+
+
+def test_format_sig_md_renders_estimator_import_and_repr():
+    out = format_sig_md(LogisticRegression(C=0.5))
+
+    assert "```python" in out
+    assert "from sklearn.linear_model import LogisticRegression" in out
+    assert "model = LogisticRegression(C=0.5)" in out
+
+
+def test_format_sig_md_renders_pipeline_imports_and_definition():
+    model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", LogisticRegression(C=0.5)),
+    ])
+
+    out = format_sig_md(model)
+
+    assert "from sklearn.pipeline import Pipeline" in out
+    assert "from sklearn.preprocessing import StandardScaler" in out
+    assert "from sklearn.linear_model import LogisticRegression" in out
+    assert '("scaler", StandardScaler()),' in out
+    assert '("model", LogisticRegression(C=0.5)),' in out

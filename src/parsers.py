@@ -1,6 +1,8 @@
 import re
 from typing import Callable
 
+from sklearn.pipeline import Pipeline
+
 BASE_URL = "https://scikit-learn.org/stable/modules/"
 GENERATED_BASE_URL = "https://scikit-learn.org/stable/modules/generated/"
 GLOSSARY_URL = "https://scikit-learn.org/stable/glossary.html"
@@ -306,8 +308,27 @@ def parse_model_desc(model, convert_rst_roles: bool = True) -> str:
     return f"\n\n{desc}"
 
 
-def format_sig_md(model) -> str:
-    cls = type(model)
+def _format_import(cls) -> str:
     mod = ".".join(cls.__module__.split(".")[:2])
-    imp = f"from {mod} import {cls.__name__}"
+    return f"from {mod} import {cls.__name__}"
+
+
+def format_sig_md(model) -> str:
+    if isinstance(model, Pipeline):
+        imports = ["from sklearn.pipeline import Pipeline"]
+        step_lines = []
+        seen_imports = set(imports)
+
+        for step_name, step_model in model.steps:
+            imp = _format_import(type(step_model))
+            if imp not in seen_imports:
+                imports.append(imp)
+                seen_imports.add(imp)
+            step_lines.append(f'    ("{step_name}", {repr(step_model)}),')
+
+        pipeline_def = "\n".join(step_lines)
+        body = "\n".join(imports)
+        return f"```python\n{body}\n\nmodel = Pipeline([\n{pipeline_def}\n])\n```"
+
+    imp = _format_import(type(model))
     return f"```python\n{imp}\n\nmodel = {repr(model)}\n```"

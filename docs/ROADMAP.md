@@ -13,7 +13,7 @@
   - [X] Model Evaluation, Metrics & Scorers at [Skolar](https://skolar.probabl.ai/en/a/6004069601880409583;p=1,1006594772100055529;pa=0)
   - [X] Metrics and scoring: quantifying the quality of predictions at [User Guide](https://scikit-learn.org/stable/modules/model_evaluation.html)
   - [X] Multiclass Receiver Operating Characteristic (ROC) at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html)
-  - [ ] Precision-Recal at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
+  - [X] Precision-Recal at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
   - [ ] `sklearn.inspection.DecisionBoundaryDisplay`
 - [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
 - [ ] Re-read Groq Documentation
@@ -42,9 +42,12 @@
 - [ ] Allow kernel customization for `GaussianProcessClassifier` 
 - [ ] Allow picking an estimator for `AdaBoostClassifier` and `BaggingClassifier`
 - [ ] Add meta ensemble models (voting, stacking, etc.)
-- [ ] Add feature pre-processing
 - [ ] Output (some) model attributes (post-learning parameters with "_" suffix)
 - [ ] Add classifiers from other frameworks
+- [ ] Add feature pre-processing
+  - [X] Identify relevant pre-processors
+  - [X] Integrate into `app.py` and `parsers.py`
+  - [ ] Allow for parameter customization
 - [X] Ensure switching model resets widgets
 - [X] Graceful failure in case of invalid hyper-parameter combo
 - [X] Add all "standalone" scikit-learn classifiers:

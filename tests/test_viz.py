@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC, SVC
 
 matplotlib.use("Agg")
@@ -263,6 +265,20 @@ def test_update_params_invalidates_prediction_cache(binary_dataset):
 
     assert viz.is_dirty is True
     assert viz._prediction_cache_valid is False
+
+
+def test_update_params_supports_pipeline_prefixed_params(binary_dataset):
+    data, target = binary_dataset
+    model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", CountingSVC()),
+    ])
+    viz = ProbaViz(model=model, data=data, target=target, features=[0, 1])
+
+    viz.update_params(model__C=0.25)
+
+    assert viz.model.get_params()["model__C"] == pytest.approx(0.25)
+    assert viz.is_dirty is True
 
 
 def test_set_dataset_invalidates_prediction_cache(binary_dataset):
