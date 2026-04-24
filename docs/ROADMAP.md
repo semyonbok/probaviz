@@ -24,8 +24,8 @@
 - [ ] Check out Andrew's Ng Context Hub
 
 ### 📊 Data Handling
-- [ ] ⭐ Synthetic data generation
 - [ ] Decide on whether cashing datasets is needed at all
+- [X] Synthetic data generation
 - [X] Binary/multiclass toy datasets
 - [X] Train/test data split
 
@@ -82,6 +82,9 @@
 - [ ] ⭐ Dedicated help/info toggles for all data visualization tabs
 - [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 - [ ] Migrate to a more interactive plotting framework like `plotly` 
+- [ ] Theming
+  - [ ] Scikit-learn-themed app colors
+  - [ ] Appealing/consistent colormaps and marker colors
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
 - [ ] Add deprecated badge against affected hyper-parameters

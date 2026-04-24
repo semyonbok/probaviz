@@ -8,6 +8,14 @@ from sklearn.gaussian_process.kernels import (
     RBF, RationalQuadratic, WhiteKernel
 )
 
+from src.synthetic import (
+    DEFAULT_CLASS_SAMPLES,
+    DEFAULT_RANDOM_STATE,
+    MAX_CLASS_SAMPLES,
+    MIN_CLASS_SAMPLES,
+    SyntheticSpec,
+)
+
 T = TypeVar("T")
 
 
@@ -38,6 +46,172 @@ def none_or_widget(
     if st.checkbox(f"Set {name}", **checkbox_kwargs):
         return widget(name, *wargs, **wkwargs)
     return None
+
+
+def _synthetic_common_widgets(spec: SyntheticSpec, key_prefix: str) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["random_state"] = st.number_input(
+        "Generation Random State",
+        min_value=0,
+        max_value=999999,
+        value=DEFAULT_RANDOM_STATE,
+        step=1,
+        key=f"{key_prefix}_random_state",
+    )
+
+    if spec.fixed_classes is None:
+        params["n_classes"] = st.slider(
+            "Number of Classes",
+            min_value=spec.min_classes,
+            max_value=spec.max_classes,
+            value=spec.default_n_classes,
+            key=f"{key_prefix}_n_classes",
+        )
+    else:
+        params["n_classes"] = spec.fixed_classes
+        st.caption(f"Number of Classes: {spec.fixed_classes} (fixed for this method)")
+
+    params["class_counts"] = {
+        class_id: st.number_input(
+            f"Class {class_id} samples",
+            min_value=MIN_CLASS_SAMPLES,
+            max_value=MAX_CLASS_SAMPLES,
+            value=DEFAULT_CLASS_SAMPLES,
+            step=1,
+            key=f"{key_prefix}_class_{class_id}_samples",
+        )
+        for class_id in range(params["n_classes"])
+    }
+
+    return params
+
+
+def synth_classification_widgets(spec: SyntheticSpec) -> dict[str, Any]:
+    params = _synthetic_common_widgets(spec, "synth_classification")
+    n_classes = int(st.session_state.get("synth_classification_n_classes", 1))
+    cluster_key = "synth_classification_clusters_per_class"
+    if cluster_disabled := (n_classes > 2):  # finally found where to stick walrus :D
+        st.session_state[cluster_key] = 1
+    params["class_sep"] = st.number_input(
+        "Class Separation",
+        min_value=0.1,
+        max_value=10.0,
+        value=1.0,
+        step=0.1,
+        key="synth_classification_class_sep",
+    )
+    params["flip_y"] = st.number_input(
+        "Label Noise",
+        min_value=0.0,
+        max_value=0.2,
+        value=0.01,
+        step=0.01,
+        format="%.2f",
+        key="synth_classification_flip_y",
+    )
+    params["n_clusters_per_class"] = st.slider(
+        "Clusters per Class",
+        min_value=1,
+        max_value=2,
+        value=1,
+        key=cluster_key,
+        help=(
+            "Bounded by the selected class count because this method uses exactly "
+            "two generated features."
+        ),
+        disabled=cluster_disabled
+    )
+    return params
+
+
+def synth_blobs_widgets(spec: SyntheticSpec) -> dict[str, Any]:
+    params = _synthetic_common_widgets(spec, "synth_blobs")
+    params["cluster_std"] = st.number_input(
+        "Cluster Std",
+        min_value=0.1,
+        max_value=10.0,
+        value=1.0,
+        step=0.1,
+        key="synth_blobs_cluster_std",
+    )
+    center_col_min, center_col_max = st.columns(2)
+    params["center_box_min"] = center_col_min.number_input(
+        "Center Box Min",
+        min_value=-20.0,
+        max_value=19.0,
+        value=-10.0,
+        step=0.5,
+        key="synth_blobs_center_box_min",
+    )
+    params["center_box_max"] = center_col_max.number_input(
+        "Center Box Max",
+        min_value=-19.0,
+        max_value=20.0,
+        value=10.0,
+        step=0.5,
+        key="synth_blobs_center_box_max",
+    )
+    return params
+
+
+def synth_gaussian_quantiles_widgets(spec: SyntheticSpec) -> dict[str, Any]:
+    params = _synthetic_common_widgets(spec, "synth_gaussian_quantiles")
+    params["cov"] = st.number_input(
+        "Covariance Scale",
+        min_value=0.1,
+        max_value=10.0,
+        value=1.0,
+        step=0.1,
+        key="synth_gaussian_quantiles_cov",
+    )
+    return params
+
+
+def synth_circles_widgets(spec: SyntheticSpec) -> dict[str, Any]:
+    params = _synthetic_common_widgets(spec, "synth_circles")
+    params["noise"] = st.number_input(
+        "Noise",
+        min_value=0.0,
+        max_value=0.3,
+        value=0.1,
+        step=0.01,
+        format="%.2f",
+        key="synth_circles_noise",
+    )
+    params["factor"] = st.number_input(
+        "Inner Circle Factor",
+        min_value=0.1,
+        max_value=0.9,
+        value=0.5,
+        step=0.05,
+        format="%.2f",
+        key="synth_circles_factor",
+    )
+    return params
+
+
+def synth_moons_widgets(spec: SyntheticSpec) -> dict[str, Any]:
+    params = _synthetic_common_widgets(spec, "synth_moons")
+    params["noise"] = st.number_input(
+        "Noise",
+        min_value=0.0,
+        max_value=0.3,
+        value=0.1,
+        step=0.01,
+        format="%.2f",
+        key="synth_moons_noise",
+    )
+    return params
+
+
+SYNTH_WIDGETS: dict[str, Callable[[SyntheticSpec], dict[str, Any]]] = {
+    "Classification": synth_classification_widgets,
+    "Blobs": synth_blobs_widgets,
+    "Gaussian Quantiles": synth_gaussian_quantiles_widgets,
+    "Circles": synth_circles_widgets,
+    "Moons": synth_moons_widgets,
+}
 
 
 def lr_widgets(hp_desc: dict[str, str]) -> dict:

@@ -1,8 +1,9 @@
 import json
+from hashlib import sha256
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
-
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
 from sklearn.preprocessing import (
     MaxAbsScaler,
@@ -15,8 +16,14 @@ from sklearn.preprocessing import (
 )
 from sklearn.pipeline import Pipeline
 
+from src.synthetic import (
+    build_synthetic_dataset,
+    deserialize_synthetic_params,
+    get_synthetic_labels,
+    get_synthetic_spec,
+)
 from src.viz import ProbaViz
-from src.widgets import none_or_widget
+from src.widgets import SYNTH_WIDGETS, none_or_widget
 from src.models import MODELS
 from src.parsers import parse_model_desc, parse_param_desc, format_sig_md
 from src.model_docs_cache import get_cached_model_docs, load_model_docs_cache
@@ -31,16 +38,21 @@ def _on_dataset_change() -> None:
 
 @st.cache_data
 def process_toy(set_name):
-    if set_name == "Wine":
+    if set_name == "Wine (multi-class)":
         data_set = load_wine(as_frame=True)
-    elif set_name == "Iris":
+    elif set_name == "Iris (multi-class)":
         data_set = load_iris(as_frame=True)
-    elif set_name == "Cancer":
+    elif set_name == "Cancer (binary)":
         data_set = load_breast_cancer(as_frame=True)
 
     target_names_map = {k: v for k, v in enumerate(data_set["target_names"])}
 
     return data_set["data"], data_set["target"].map(target_names_map)
+
+
+@st.cache_data(max_entries=100)
+def process_synth(synth_name, synth_config_json):
+    return build_synthetic_dataset(synth_name, deserialize_synthetic_params(synth_config_json))
 
 
 @st.cache_data
@@ -183,6 +195,17 @@ def plot_prs(tab_pr):
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
 
+data = None
+target = None
+set_name = None
+display_set_name = None
+f1 = 0
+f2 = 1
+train_size = None
+split_random_state = None
+data_config = None
+synth_summary: str | None = None
+
 # side bar controls: data, model, and hyperparameters
 with st.sidebar:
     st.subheader(
@@ -195,16 +218,18 @@ with st.sidebar:
         )
     )
 
-    dataset = st.radio("Select a Dataset", ["Toy", "Synthetic"], disabled=True)
+    dataset = st.radio("Select a Dataset", ["Toy", "Synthetic"])
     if dataset == "Toy":
         set_name = st.selectbox(
-            "Select a Toy Dataset", [None, "Wine", "Iris", "Cancer"],
+            "Select a Toy Dataset",
+            [None, "Wine (multi-class)", "Iris (multi-class)", "Cancer (binary)"],
             on_change=_on_dataset_change, key="set_name"
         )
 
         # once set is chosen, process data and allow to pick features
         if set_name is not None:
             data, target = process_toy(set_name)
+            display_set_name = set_name
             f1 = st.selectbox(
                 "Pick Feature 1 (X-axis)",
                 data.columns, key=f"{set_name}_f1"
@@ -213,10 +238,29 @@ with st.sidebar:
                 "Pick Feature 2 (Y-axis)",
                 data.columns[data.columns != f1], key=f"{set_name}_f2"
             )
-            train_size = st.number_input(
-                "Pick Train Size", 0.5, 0.9, 0.75, 0.05,
-                help="Controls the fraction of data allocated for training."
-            )
+
+    elif dataset == "Synthetic":
+        synth_name = st.selectbox(
+            "Select a Data Synthesis Method",
+            [None, *get_synthetic_labels()],
+            on_change=_on_dataset_change, key="synth_name"
+        )
+        if synth_name is not None:
+            synth_spec = get_synthetic_spec(synth_name)
+            st.caption(synth_spec.help_text)
+            with st.container(border=True):
+                synth_params = SYNTH_WIDGETS[synth_name](synth_spec)
+            synth_config_json = json.dumps(synth_params, sort_keys=True)
+            data, target = process_synth(synth_name, synth_config_json)
+            target_bytes = pd.Series(target).to_numpy().tobytes()
+            set_name = sha256(
+                data.values.tobytes() + target_bytes + synth_config_json.encode()
+            ).hexdigest()
+            display_set_name = f"Synthetic: {synth_name}"
+            f1, f2 = 0, 1
+
+    if set_name is not None:
+        with st.container(border=True):
             split_random_state = st.number_input(
                 "Data Split Random State", 0, 999999, 42, 1,
                 key=f"{set_name}_split_random_state",
@@ -225,14 +269,12 @@ with st.sidebar:
                     "Please choose an integer for reproducible output."
                 )
             )
-            data_config = (set_name, f1, f2, train_size, split_random_state)
-            st.caption(
-                f"{data.shape[0]} samples | {data.shape[1]} features | "
-                f"{target.nunique()} classes"
+            train_size = st.number_input(
+                "Pick Train Size", 0.5, 0.9, 0.75, 0.05,
+                help="Controls the fraction of data allocated for training."
             )
-
-    elif dataset == "Synthetic":
-        pass
+            train_col, test_col = st.columns(2)
+        data_config = (set_name, f1, f2, train_size, split_random_state)
 
     st.divider()
     st.subheader("Pipeline")
@@ -283,14 +325,6 @@ with st.sidebar:
     else:
         st.caption("Select dataset and model to configure hyper-parameters.")
 
-    st.divider()
-    st.subheader("Current Configuration")
-    st.caption(f"Dataset: {set_name or 'None'}")
-    st.caption(f"Features: {f1 if set_name else '-'} vs {f2 if set_name else '-'}")
-    st.caption(f"Split Random State: {split_random_state if set_name else '-'}")
-    st.caption(f"Model: {model_pick or 'None'}")
-    st.caption(f"Preprocessing: {scaling}")
-
 # Session State and Plotting Logic
 # If data is None, don't plot anything
 # If data is not None but model is None, plot blank scatter
@@ -322,6 +356,19 @@ elif st.session_state["data_config"] != data_config:
         train_size=train_size,
         split_random_state=split_random_state,
     )
+
+train_col.caption(
+    (
+        "Train subset:  \n"
+        f" {len(st.session_state['pv']._train_target)} samples"
+    )
+)
+test_col.caption(
+    (
+        "Test subset:  \n"
+        f" {len(st.session_state['pv']._test_target)} samples"
+    )
+)
 
 if model is None:
     st.pyplot(
