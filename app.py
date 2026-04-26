@@ -105,6 +105,8 @@ def prefix_model_params(params, scaling):
 
 
 def plot_matrices(tab_conf, tab_err):
+    matrix_explainers = load_tab_explainers()
+
     # confusion matrices
     train_col, test_col = tab_conf.columns(2, gap="medium")
     train_col.subheader("Train Subset")
@@ -119,6 +121,9 @@ def plot_matrices(tab_conf, tab_err):
             return_fig=True, fig_size=(9, 16), data_split="test"
         )
     )
+    confusion_explainer = matrix_explainers["confusion_matrices"]
+    with tab_conf.expander(confusion_explainer["title"], icon=confusion_explainer["icon"]):
+        st.info(confusion_explainer["body_markdown"])
 
     # error matrices
     train_col, test_col = tab_err.columns(2, gap="medium")
@@ -134,6 +139,9 @@ def plot_matrices(tab_conf, tab_err):
             return_fig=True, mode="error", fig_size=(9, 16), data_split="test"
         )
     )
+    error_explainer = matrix_explainers["error_matrices"]
+    with tab_err.expander(error_explainer["title"], icon=error_explainer["icon"]):
+        st.info(error_explainer["body_markdown"])
 
 
 def plot_rocs(tab_roc):
@@ -390,11 +398,14 @@ else:
         tab_contour, tab_conf, tab_err, tab_roc, tab_pr = st.tabs(
             ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves", "PR Curves"]
         )
+        boundary_explainer = load_tab_explainers()["decision_boundary"]
         tab_contour.pyplot(
             st.session_state["pv"].plot(
                 contour_on=True, return_fig=True, fig_size=(16, 9)
             )
         )
+        with tab_contour.expander(boundary_explainer["title"], icon=boundary_explainer["icon"]):
+            st.info(boundary_explainer["body_markdown"])
         for warning_text in st.session_state["pv"].fit_warnings:
             with st.expander("Warnings", icon="⚠️"):
                 st.warning(warning_text)

@@ -1,6 +1,21 @@
 {
   "schema_version": 1,
   "tabs": {
+    "decision_boundary": {
+      "title": "How to Read the Decision Boundary",
+      "icon": "ℹ️",
+      "body_markdown": "The decision boundary is built by evaluating the fitted model across a grid of points spanning the two selected features.\n\nThe shaded contours show the model's probability scores for the class it favors at each location. These are model response scores, not guaranteed mathematical probabilities: they may be poorly calibrated and should be interpreted as relative confidence unless the model has been calibrated.\n\nDarker or higher-valued regions mean the model assigns stronger support to that class. Boundaries appear where the favored class changes or where class scores are close.\n\nTraining points have black outlines; test points have white outlines.\n\n**Reference**\n- [scikit-learn API: DecisionBoundaryDisplay](https://scikit-learn.org/stable/modules/generated/sklearn.inspection.DecisionBoundaryDisplay.html)"
+    },
+    "confusion_matrices": {
+      "title": "How to Read Confusion Matrices",
+      "icon": "ℹ️",
+      "body_markdown": "Confusion matrices compare true labels with labels predicted by the model.\n\nRows are true classes; columns are predicted classes. The main diagonal contains correct predictions. Off-diagonal cells are mistakes: they show which class a sample really belonged to and which class the model assigned instead.\n\nRaw counts show sample totals. Row-normalized values answer: for each true class, what share was classified correctly, and what were its most common misclassifications? Column-normalized values answer the same question from the prediction side: for each predicted class, what share was correct, and which true classes most often ended up there?\n\n**Reference**\n- [scikit-learn API: ConfusionMatrixDisplay](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ConfusionMatrixDisplay.html)"
+    },
+    "error_matrices": {
+      "title": "How to Read Error Matrices",
+      "icon": "ℹ️",
+      "body_markdown": "Error matrices use the same layout as confusion matrices, but correct predictions are removed so the view focuses only on mistakes.\n\nIn code, this is done by passing error indicators as sample weights:\n\n```python\nsample_weight = y_pred != y_true\n```\n\nOff-diagonal cells keep the same meaning as in a confusion matrix: true class by row, predicted class by column. The main diagonal contributes zero because those entries are correct predictions.\n\nRaw counts show error totals. In normalized error matrices, percentages are calculated among errors only: row-normalized values show where each true class's mistakes went, and column-normalized values show where each predicted class's mistakes came from.\n\n**Reference**\n- [scikit-learn API: ConfusionMatrixDisplay](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ConfusionMatrixDisplay.html)"
+    },
     "roc_curves": {
       "title": "How to Read Receiver Operating Characteristic (ROC) Curves",
       "icon": "ℹ️",
