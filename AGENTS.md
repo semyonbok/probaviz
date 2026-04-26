@@ -35,6 +35,6 @@ When running in Codex web or other cloud agents:
 * The environment is provisioned automatically from `probaviz.yml` or `requirements.txt`.
 * Do **not** assume Conda is available.
 * If `conda run -n probaviz` fails or is unavailable, use the active Python environment directly:
-  `python <package>.py`
-  `pytest`
-  `pip install <package>`
+  - `python <package>.py`
+  - `pytest`
+  - `pip install <package>`
