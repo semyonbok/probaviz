@@ -241,7 +241,7 @@ def build_synthetic_dataset(
         random_state=generation_seed,
     )
     return (
-        pd.DataFrame(balanced_X, columns=["Feature 1", "Feautre 2"]),
+        pd.DataFrame(balanced_X, columns=["Feature 1", "Feature 2"]),
         pd.Series(balanced_y).map({i: f"class_{i}" for i in range(n_classes)})
     )
 

@@ -83,11 +83,12 @@ def test_build_synthetic_dataset_returns_exact_requested_class_counts(
     data, target = build_synthetic_dataset(method_label, params)
 
     assert data.shape == (sum(expected_counts.values()), 2)
-    assert list(data.columns) == [0, 1]
+    assert list(data.columns) == ["Feature 1", "Feature 2"]
 
     unique, counts = np.unique(target, return_counts=True)
-    observed = {int(class_id): int(count) for class_id, count in zip(unique, counts)}
-    assert observed == expected_counts
+    observed = {str(class_id): int(count) for class_id, count in zip(unique, counts)}
+    expected = {f"class_{class_id}": count for class_id, count in expected_counts.items()}
+    assert observed == expected
 
 
 @pytest.mark.parametrize(
