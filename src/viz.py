@@ -4,6 +4,7 @@ Utilities to visualize classifier probabilities and training performance.
 
 from __future__ import annotations
 
+import warnings
 from itertools import cycle
 from typing import Any, Optional, Sequence, Tuple, Literal
 from numbers import Real
@@ -25,6 +26,7 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 plt.style.use("seaborn-v0_8-ticks")
 
@@ -85,10 +87,15 @@ class ProbaViz:
         self._test_xy: np.ndarray = np.empty((0, 2))
         self._train_target: np.ndarray = np.empty(0)
         self._test_target: np.ndarray = np.empty(0)
+        self._model_target: np.ndarray = np.empty(0)
+        self._model_train_target: np.ndarray = np.empty(0)
+        self._model_test_target: np.ndarray = np.empty(0)
         self._train_predictions: np.ndarray | None = None
         self._test_predictions: np.ndarray | None = None
         self._train_predict_proba: np.ndarray | None = None
         self._test_predict_proba: np.ndarray | None = None
+        self._target_label_encoder: LabelEncoder | None = None
+        self._fit_warnings: list[str] = []
         self._prediction_cache_valid = False
         self._is_dirty = True
         self._is_fitted = False
@@ -242,7 +249,12 @@ class ProbaViz:
     def is_dirty(self) -> bool:
         return self._is_dirty
 
+    @property
+    def fit_warnings(self) -> list[str]:
+        return self._fit_warnings.copy()
+
     def _mark_dirty(self) -> None:
+        self._fit_warnings = []
         self._is_dirty = True
         self._is_fitted = False
         self._prediction_cache_valid = False
@@ -321,6 +333,34 @@ class ProbaViz:
         self._coord_dict = {"x": mesh_x, "y": mesh_y}
         self._mesh_entries = np.column_stack([mesh_x.ravel(), mesh_y.ravel()])
 
+    def _encode_targets(
+        self,
+        target_arr: np.ndarray,
+        train_target_arr: np.ndarray,
+        test_target_arr: np.ndarray,
+    ) -> tuple[LabelEncoder | None, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        if pd.api.types.is_numeric_dtype(target_arr) and not pd.api.types.is_bool_dtype(target_arr):
+            classes = np.unique(target_arr)
+            return None, target_arr, train_target_arr, test_target_arr, classes
+
+        label_encoder = LabelEncoder()
+        encoded_target_arr = label_encoder.fit_transform(target_arr)
+        encoded_train_target_arr = label_encoder.transform(train_target_arr)
+        encoded_test_target_arr = label_encoder.transform(test_target_arr)
+        classes = label_encoder.classes_.copy()
+        return (
+            label_encoder,
+            encoded_target_arr,
+            encoded_train_target_arr,
+            encoded_test_target_arr,
+            classes,
+        )
+
+    def _decode_predictions(self, predictions: np.ndarray) -> np.ndarray:
+        if self._target_label_encoder is None:
+            return predictions
+        return self._target_label_encoder.inverse_transform(predictions)
+
     def _ensure_model_compatibility(self, model: Any) -> None:
         # XXX this check will create problems when working with other frameworks
         if not is_classifier(model):
@@ -379,9 +419,17 @@ class ProbaViz:
                 "train_size is compatible with class frequencies."
             ) from exc
 
+        (
+            target_label_encoder,
+            model_target_arr,
+            model_train_target_arr,
+            model_test_target_arr,
+            classes,
+        ) = self._encode_targets(target_arr, train_target_arr, test_target_arr)
+
         self._data = selected_data
         self._features = selected_data.columns.to_numpy()
-        self._classes = np.unique(target_arr)
+        self._classes = classes
         self._xy = xy
         self._train_size = active_train_size
         self._split_random_state = active_split_random_state
@@ -390,6 +438,10 @@ class ProbaViz:
         self._target = target_arr
         self._train_target = train_target_arr
         self._test_target = test_target_arr
+        self._model_target = model_target_arr
+        self._model_train_target = model_train_target_arr
+        self._model_test_target = model_test_target_arr
+        self._target_label_encoder = target_label_encoder
         self._train_predictions = None
         self._test_predictions = None
         self._train_predict_proba = None
@@ -422,9 +474,15 @@ class ProbaViz:
         self._ensure_model_compatibility(self._model)
 
         if force or self._is_dirty:
-            self._model.fit(self._train_xy, self._train_target)
-            self._train_predictions = self._model.predict(self._train_xy)
-            self._test_predictions = self._model.predict(self._test_xy)
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter("always")
+                self._model.fit(self._train_xy, self._model_train_target)
+            self._fit_warnings = [
+                f"{warning.category.__name__}: {warning.message}"
+                for warning in caught_warnings
+            ]
+            self._train_predictions = self._decode_predictions(self._model.predict(self._train_xy))
+            self._test_predictions = self._decode_predictions(self._model.predict(self._test_xy))
             if hasattr(self._model, "predict_proba"):
                 self._train_predict_proba = self._model.predict_proba(self._train_xy)
                 self._test_predict_proba = self._model.predict_proba(self._test_xy)
@@ -437,13 +495,13 @@ class ProbaViz:
 
     def _get_train_predictions(self) -> np.ndarray:
         if self._train_predictions is None or not self._prediction_cache_valid:
-            self._train_predictions = self.model.predict(self._train_xy)
+            self._train_predictions = self._decode_predictions(self.model.predict(self._train_xy))
             self._prediction_cache_valid = True
         return self._train_predictions  # type: ignore
 
     def _get_test_predictions(self) -> np.ndarray:
         if self._test_predictions is None or not self._prediction_cache_valid:
-            self._test_predictions = self.model.predict(self._test_xy)
+            self._test_predictions = self._decode_predictions(self.model.predict(self._test_xy))
             self._prediction_cache_valid = True
         return self._test_predictions  # type: ignore
 

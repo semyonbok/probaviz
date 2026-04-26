@@ -221,15 +221,14 @@ synth_summary: str | None = None
 
 # side bar controls: data, model, and hyperparameters
 with st.sidebar:
-    st.subheader(
-        "Data",
+    st.subheader("Data")
+    dataset = st.radio(
+        "Select Dataset", ["Toy", "Synthetic"],
         help=(
             "Please pick a toy dataset and two of its numerical features (columns) "
             "or synthesize your own dataset that will be used for model training."
         )
     )
-
-    dataset = st.radio("Select a Dataset", ["Toy", "Synthetic"])
     if dataset == "Toy":
         set_name = st.selectbox(
             "Select a Toy Dataset",
@@ -241,14 +240,15 @@ with st.sidebar:
         if set_name is not None:
             data, target = process_toy(set_name)
             display_set_name = set_name
-            f1 = st.selectbox(
-                "Pick Feature 1 (X-axis)",
-                data.columns, key=f"{set_name}_f1"
-            )
-            f2 = st.selectbox(
-                "Pick Feature 2 (Y-axis)",
-                data.columns[data.columns != f1], key=f"{set_name}_f2"
-            )
+            with st.container(border=True):
+                f1 = st.selectbox(
+                    "Pick Feature 1 (X-axis)",
+                    data.columns, key=f"{set_name}_f1"
+                )
+                f2 = st.selectbox(
+                    "Pick Feature 2 (Y-axis)",
+                    data.columns[data.columns != f1], key=f"{set_name}_f2"
+                )
 
     elif dataset == "Synthetic":
         synth_name = st.selectbox(
@@ -292,7 +292,7 @@ with st.sidebar:
         data_config = (set_name, f1, f2, train_size, split_random_state)
 
     st.divider()
-    st.subheader("Pipeline")
+    st.subheader("Classification Pipeline")
     scaling = st.selectbox(
         "Select Feature Scaling",
         [
@@ -316,7 +316,7 @@ with st.sidebar:
     model = MODELS[model_pick].factory() if model_pick else None
 
     st.divider()
-    st.subheader("Hyper-parameters")
+    st.subheader("Model Hyper-parameters")
     hp = {}
 
     # set `random_state` if the model has this parameter
@@ -395,6 +395,9 @@ else:
                 contour_on=True, return_fig=True, fig_size=(16, 9)
             )
         )
+        for warning_text in st.session_state["pv"].fit_warnings:
+            with st.expander("Warnings", icon="⚠️"):
+                st.warning(warning_text)
         plot_matrices(tab_conf, tab_err)
         plot_rocs(tab_roc)
         plot_prs(tab_pr)

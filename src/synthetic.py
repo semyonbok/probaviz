@@ -176,7 +176,7 @@ def build_synthetic_dataset(
         class_counts=params["class_counts"],  # type: ignore[arg-type]
     )
     generation_seed = random_state
-    total_samples = MAX_CLASS_SAMPLES * n_classes
+    total_samples = MAX_CLASS_SAMPLES * n_classes + 100  # buffer
 
     if spec.key == "blobs":
         cluster_std = float(params["cluster_std"])

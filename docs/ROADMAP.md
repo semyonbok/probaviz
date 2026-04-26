@@ -5,6 +5,7 @@
 ### 🧱 Project Setup & Structure
 - [ ] ⭐ Publish app on Streamlit Community Cloud
 - [ ] ⭐ Add “Open in Streamlit” badge
+- [ ] Final review
 - [ ] Finalize and clean `requirements.txt`
 - [X] Update repo README file
 
@@ -80,7 +81,6 @@
 
 ### 🧩 UI / UX Improvements
 - [ ] ⭐ Dedicated help/info toggles for all data visualization tabs
-- [ ] ⭐ Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 - [ ] Migrate to a more interactive plotting framework like `plotly` 
 - [ ] Theming
   - [ ] Scikit-learn-themed app colors
@@ -130,6 +130,7 @@
   - [X] replace examples like: `sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py` 
   - [X] link validation
   - [X] simply cache processed model/params markdown
+- [X] Catch and display warnings during model fit (e.g., "ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet.")
 - [X] Move model params out of contour plot title
 - [X] Standardize widget generation patterns (model registry?)
 - [X] Allow for optional selection of `random_state`
