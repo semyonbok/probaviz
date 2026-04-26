@@ -55,6 +55,19 @@ def process_synth(synth_name, synth_config_json):
     return build_synthetic_dataset(synth_name, deserialize_synthetic_params(synth_config_json))
 
 
+def class_counts(arr, name: str) -> str:
+    dict_ = (
+        pd
+        .Series(arr)
+        .value_counts()
+        .sort_index()
+        .to_dict()
+    )
+    total = f"{name.capitalize()} subset:  \n {len(arr)} points  \n"
+    counts = "  \n".join([f"\t{cls}: {count}" for cls, count in dict_.items()])
+    return total + counts
+
+
 @st.cache_data
 def load_cached_model_docs():
     return load_model_docs_cache()
@@ -211,10 +224,8 @@ with st.sidebar:
     st.subheader(
         "Data",
         help=(
-            "Pick a dataset and two of its numerical features (columns) "
-            "that will be used for model training. Currently, three "
-            "['toy' datasets](https://scikit-learn.org/stable/datasets/toy_dataset.html) "
-            "are available: wine, iris, and breast cancer."
+            "Please pick a toy dataset and two of its numerical features (columns) "
+            "or synthesize your own dataset that will be used for model training."
         )
     )
 
@@ -252,7 +263,11 @@ with st.sidebar:
                 synth_params = SYNTH_WIDGETS[synth_name](synth_spec)
             synth_config_json = json.dumps(synth_params, sort_keys=True)
             data, target = process_synth(synth_name, synth_config_json)
-            target_bytes = pd.Series(target).to_numpy().tobytes()
+            target_bytes = json.dumps(
+                pd.Series(target).tolist(),
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
             set_name = sha256(
                 data.values.tobytes() + target_bytes + synth_config_json.encode()
             ).hexdigest()
@@ -357,18 +372,8 @@ elif st.session_state["data_config"] != data_config:
         split_random_state=split_random_state,
     )
 
-train_col.caption(
-    (
-        "Train subset:  \n"
-        f" {len(st.session_state['pv']._train_target)} samples"
-    )
-)
-test_col.caption(
-    (
-        "Test subset:  \n"
-        f" {len(st.session_state['pv']._test_target)} samples"
-    )
-)
+train_col.caption(class_counts(st.session_state['pv']._train_target, "train"))
+test_col.caption(class_counts(st.session_state['pv']._test_target, "test"))
 
 if model is None:
     st.pyplot(

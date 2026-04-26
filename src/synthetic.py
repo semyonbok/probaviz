@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from numbers import Integral
-from typing import Mapping
+from typing import Mapping, Any
 
 import numpy as np
 import pandas as pd
@@ -154,7 +154,9 @@ def validate_random_state(random_state: int | None) -> int | None:
     return random_state_int
 
 
-def build_synthetic_dataset(method_label: str, params: Mapping[str, object]) -> tuple[pd.DataFrame, np.ndarray]:
+def build_synthetic_dataset(
+    method_label: str, params: Mapping[str, Any]
+) -> tuple[pd.DataFrame, pd.Series]:
     spec = get_synthetic_spec(method_label)
     random_state = validate_random_state(params.get("random_state"))  # type: ignore[arg-type]
     requested_n_classes = int(params["n_classes"])
@@ -238,7 +240,10 @@ def build_synthetic_dataset(method_label: str, params: Mapping[str, object]) -> 
         class_counts=class_counts,
         random_state=generation_seed,
     )
-    return pd.DataFrame(balanced_X), balanced_y
+    return (
+        pd.DataFrame(balanced_X, columns=["Feature 1", "Feautre 2"]),
+        pd.Series(balanced_y).map({i: f"class_{i}" for i in range(n_classes)})
+    )
 
 
 def rebalance_exact_class_counts(

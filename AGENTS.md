@@ -1,28 +1,36 @@
 ## Python environment
 
-All Python commands must be executed inside the `probaviz` conda environment.
-
-Never use the system Python or global environment.
+All Python-related commands must run inside the `probaviz` Conda environment.
+Do not use the system Python or global environment.
 
 ### How to run commands
 
-Always use `conda run -n probaviz` when executing Python-related commands, including:
+Prefer running commands with:
 
-- running scripts:
-    conda run -n probaviz python script.py
+```
+conda run -n probaviz <command>
+```
 
-- running tests:
-    conda run -n probaviz pytest
+Examples:
 
-- installing packages:
-    conda run -n probaviz pip install <package>
+* Run scripts:
+  `conda run -n probaviz python script.py`
+* Run tests:
+  `conda run -n probaviz pytest`
+* One-off code execution:
+  `conda run -n probaviz python -c "print('hello')"`
 
-- interactive checks:
-    conda run -n probaviz python -c "<code>"
+### Package installation
 
-Do not use:
-- `python`
-- `pip`
-- `pytest`
+* Prefer installing packages with Conda:
+  `conda install -n probaviz <package>`
 
-without the `conda run -n probaviz` prefix.
+* If a package is not available via Conda, use pip as a fallback:
+  `conda run -n probaviz pip install <package>`
+
+### Notes
+
+* Avoid using `python`, `pip`, or `pytest` without the `conda run -n probaviz` prefix.
+* For interactive development (e.g. local shells or IDEs), activating the environment with
+  `conda activate probaviz` is acceptable.
+* Be careful with shell quoting when using `python -c`, especially for complex code.

@@ -58,6 +58,7 @@ def _synthetic_common_widgets(spec: SyntheticSpec, key_prefix: str) -> dict[str,
         value=DEFAULT_RANDOM_STATE,
         step=1,
         key=f"{key_prefix}_random_state",
+        help="Controls data generation, making the process reproducible"
     )
 
     if spec.fixed_classes is None:

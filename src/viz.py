@@ -821,7 +821,8 @@ class ProbaViz:
             raise ValueError("mode must be either 'confusion' or 'error'")
 
         with plt.rc_context({"font.size": self.FS}):
-            fig, axes = plt.subplots(3, 1, figsize=fig_size, tight_layout=False, sharex=True)
+            fig, axes = plt.subplots(3, 1, figsize=fig_size, sharex=True)
+            fig.tight_layout(pad=2)
 
             ConfusionMatrixDisplay.from_predictions(
                 y_true,
