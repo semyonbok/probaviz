@@ -33,10 +33,9 @@ Examples:
 When running in Codex web or other cloud agents:
 
 * Do **not** assume Conda is available.
-* If Conda is available, prefer creating/updating the environment from `environment.yml`.
-* If Conda is unavailable, install the runtime dependencies into the active Python environment with pip:
+* Install the runtime dependencies into the active Python environment with pip:
 
-  `python -m pip install numpy pandas scikit-learn==1.8.0 matplotlib protobuf streamlit`
+  `python -m pip install -r requirements.txt`
 
 * If tests or notebooks are needed, also install the dev-only dependencies from `environment-dev.yml`:
 

@@ -1012,7 +1012,7 @@ class ProbaViz:
             else:
                 raise ValueError("mode must be either 'micro_macro' or 'class'")
 
-            axes.legend(loc="lower right")
+            axes.legend(loc="lower right", frameon=True, framealpha=.5)
 
         if return_fig:
             return fig
@@ -1109,7 +1109,7 @@ class ProbaViz:
             else:
                 raise ValueError("mode must be either 'micro_macro' or 'class'")
 
-            axes.legend(loc="lower left")
+            axes.legend(loc="lower left", frameon=True, framealpha=.5)
 
         if return_fig:
             return fig
