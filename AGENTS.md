@@ -32,9 +32,17 @@ Examples:
 ## Cloud / Codex environments
 When running in Codex web or other cloud agents:
 
-* The environment is provisioned automatically from `probaviz.yml` or `requirements.txt`.
 * Do **not** assume Conda is available.
-* If `conda run -n probaviz` fails or is unavailable, use the active Python environment directly:
+* If Conda is available, prefer creating/updating the environment from `environment.yml`.
+* If Conda is unavailable, install the runtime dependencies into the active Python environment with pip:
+
+  `python -m pip install numpy pandas scikit-learn==1.8.0 matplotlib protobuf streamlit`
+
+* If tests or notebooks are needed, also install the dev-only dependencies from `environment-dev.yml`:
+
+  `python -m pip install pytest jupyterlab ipywidgets plotly`
+
+* After pip setup, use the active Python environment directly:
   - `python <package>.py`
   - `pytest`
   - `pip install <package>`

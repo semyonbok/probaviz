@@ -353,6 +353,7 @@ with st.sidebar:
 # If data is not None but model is None, plot blank scatter
 # if data and model are not None, plot contour
 if set_name is None:
+    st.write("Pick a dataset, tune a model, explore the views.")
     st.session_state.pop("pv", None)
     st.session_state.pop("data_config", None)
     st.stop()

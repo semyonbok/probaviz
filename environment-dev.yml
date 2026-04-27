@@ -2,15 +2,8 @@ name: probaviz
 channels:
   - conda-forge
 dependencies:
-  - python
-  - pip
   - pytest
   - jupyterlab
   - ipywidgets
-  - numpy
-  - pandas
-  - scikit-learn=1.8.0
-  - matplotlib
   - plotly
-  - protobuf
-  - streamlit
+
