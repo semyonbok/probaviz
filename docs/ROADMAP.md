@@ -3,10 +3,9 @@
 ## 🏗️ Ongoing Work
 
 ### 🧱 Project Setup & Structure
-- [ ] ⭐ Publish app on Streamlit Community Cloud
-- [ ] ⭐ Add “Open in Streamlit” badge
-- [ ] Final review
-- [ ] Finalize and clean `requirements.txt`
+- [X] Finalize and clean `requirements.txt`
+- [X] Publish app on Streamlit Community Cloud
+- [X] Add “Open in Streamlit” badge
 - [X] Update repo README file
 
 ### 🎓 Learning & Tools

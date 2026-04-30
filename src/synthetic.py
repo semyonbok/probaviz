@@ -19,6 +19,7 @@ MIN_CLASS_SAMPLES = 10
 MAX_CLASS_SAMPLES = 150
 DEFAULT_CLASS_SAMPLES = 50
 DEFAULT_RANDOM_STATE = 17
+BUFFER = 100  # oversample to ensure set number of class samples are obtained
 
 
 @dataclass(frozen=True)
@@ -176,7 +177,7 @@ def build_synthetic_dataset(
         class_counts=params["class_counts"],  # type: ignore[arg-type]
     )
     generation_seed = random_state
-    total_samples = MAX_CLASS_SAMPLES * n_classes + 100  # buffer
+    total_samples = MAX_CLASS_SAMPLES * n_classes + BUFFER
 
     if spec.key == "blobs":
         cluster_std = float(params["cluster_std"])

@@ -213,7 +213,9 @@ def plot_prs(tab_pr):
 
 
 # main display space
-st.set_page_config(layout='wide')
+st.set_page_config(
+    page_title="ProbaViz", layout="centered", initial_sidebar_state="expanded"
+)
 st.header("Welcome to ProbaViz")
 
 data = None
@@ -239,7 +241,7 @@ with st.sidebar:
     )
     if dataset == "Toy":
         set_name = st.selectbox(
-            "Select a Toy Dataset",
+            "👉 **Select a Toy Dataset**",
             [None, "Wine (multi-class)", "Iris (multi-class)", "Cancer (binary)"],
             on_change=_on_dataset_change, key="set_name"
         )
@@ -260,7 +262,7 @@ with st.sidebar:
 
     elif dataset == "Synthetic":
         synth_name = st.selectbox(
-            "Select a Data Synthesis Method",
+            "👉 **Select a Data Synthesis Method**",
             [None, *get_synthetic_labels()],
             on_change=_on_dataset_change, key="synth_name"
         )
@@ -320,7 +322,7 @@ with st.sidebar:
             "[API Reference](https://scikit-learn.org/stable/api/sklearn.preprocessing.html)"
         ),
     )
-    model_pick = st.selectbox("Select a Model", [None, *sorted(MODELS.keys())])
+    model_pick = st.selectbox("👉 **Select a Model**", [None, *sorted(MODELS.keys())])
     model = MODELS[model_pick].factory() if model_pick else None
 
     st.divider()

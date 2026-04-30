@@ -11,15 +11,14 @@ The figures below illustrate a synthetic dataset with six classes. The probabili
   <summary>Example visualizations (multiclass probability surfaces)</summary>
 
 ## Dataset
-![Synthetic dataset scatter plot](./docs/0_scatter.png)
+![Synthetic dataset scatter plot](./docs/pics/0_scatter.png)
 
 ## Logistic Regression
-![Logistic regression probability surface](./docs/1_lr.png)
+![Logistic regression probability surface](./docs/pics/1_lr.png)
 
 ## Random Forest Classifier
-![Random forest probability surface](./docs/2_rfc.png)
+![Random forest probability surface](./docs/pics/2_rfc.png)
 </details>
----
 
 ## 🎯 Project Goals
 - Interactive visualization of decision boundaries, probability surfaces and classification metrics
