@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.preprocessing import (
     MaxAbsScaler,
     MinMaxScaler,
@@ -212,6 +213,66 @@ def plot_prs(tab_pr):
         )
 
 
+def plot_metrics(tab_metrics):
+    def _build_metrics_tables(data_split: str):
+        pv = st.session_state["pv"]
+        if data_split == "train":
+            y_true = pv._train_target
+            y_pred = pv._train_predictions if pv._train_predictions is not None else pv.model.predict(pv._train_xy)
+        else:
+            y_true = pv._test_target
+            y_pred = pv._test_predictions if pv._test_predictions is not None else pv.model.predict(pv._test_xy)
+
+        classes = pv.classes
+        class_precision, class_recall, class_f1, class_support = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            labels=classes,
+            average=None,
+            zero_division=0,
+        )
+        class_metrics_df = pd.DataFrame(
+            {
+                "Precision": class_precision,
+                "Recall": class_recall,
+                "F1-Score": class_f1,
+                "Support": class_support.astype(int),
+            },
+            index=classes,
+        ).round(3)
+        class_metrics_df.index.name = "Class"
+
+        macro_precision, macro_recall, macro_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="macro", zero_division=0
+        )
+        weighted_precision, weighted_recall, weighted_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="weighted", zero_division=0
+        )
+        aggregate_metrics_df = pd.DataFrame(
+            {
+                "Precision": [None, macro_precision, weighted_precision],
+                "Recall": [None, macro_recall, weighted_recall],
+                "F1-Score": [accuracy_score(y_true, y_pred), macro_f1, weighted_f1],
+                "Support": [len(y_true), len(y_true), len(y_true)],
+            },
+            index=["Accuracy", "Macro Avg", "Weighted Avg"],
+        ).round(3)
+        aggregate_metrics_df.index.name = "Metric"
+        return class_metrics_df, aggregate_metrics_df
+
+    train_col, test_col = tab_metrics.columns(2, gap="medium")
+    for col, subset_name, split in [
+        (train_col, "Train Subset", "train"),
+        (test_col, "Test Subset", "test"),
+    ]:
+        col.subheader(subset_name)
+        class_metrics_df, aggregate_metrics_df = _build_metrics_tables(split)
+        col.markdown("**Class-specific metrics table**")
+        col.dataframe(class_metrics_df, use_container_width=True)
+        col.markdown("**Aggregate metrics table**")
+        col.dataframe(aggregate_metrics_df, use_container_width=True)
+
+
 # main display space
 st.set_page_config(layout='wide')
 st.header("Welcome to ProbaViz")
@@ -396,8 +457,15 @@ else:
         st.session_state["pv"].model = active_model
         st.session_state["pv"].update_params(**prefix_model_params(hp, scaling))
 
-        tab_contour, tab_conf, tab_err, tab_roc, tab_pr = st.tabs(
-            ["Decision Boundary", "Confusion Matrices", "Error Matrices", "ROC Curves", "PR Curves"]
+        tab_contour, tab_conf, tab_err, tab_roc, tab_pr, tab_metrics = st.tabs(
+            [
+                "Decision Boundary",
+                "Confusion Matrices",
+                "Error Matrices",
+                "ROC Curves",
+                "PR Curves",
+                "Classification Metrics",
+            ]
         )
         boundary_explainer = load_tab_explainers()["decision_boundary"]
         tab_contour.pyplot(
@@ -413,6 +481,7 @@ else:
         plot_matrices(tab_conf, tab_err)
         plot_rocs(tab_roc)
         plot_prs(tab_pr)
+        plot_metrics(tab_metrics)
     except AttributeError:
         tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
@@ -428,6 +497,7 @@ else:
             "❌ **Precision-recall curves are unavailable for this model configuration.** "
             "This view requires `predict_proba` support."
         )
+        plot_metrics(tab_metrics)
     except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
     finally:
