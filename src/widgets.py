@@ -92,8 +92,6 @@ def synth_classification_widgets(spec: SyntheticSpec) -> dict[str, Any]:
     params = _synthetic_common_widgets(spec, "synth_classification")
     n_classes = int(st.session_state.get("synth_classification_n_classes", 1))
     cluster_key = "synth_classification_clusters_per_class"
-    if cluster_disabled := (n_classes > 2):  # finally found where to stick walrus :D
-        st.session_state[cluster_key] = 1
     params["class_sep"] = st.number_input(
         "Class Separation",
         min_value=0.1,
@@ -111,18 +109,28 @@ def synth_classification_widgets(spec: SyntheticSpec) -> dict[str, Any]:
         format="%.2f",
         key="synth_classification_flip_y",
     )
-    params["n_clusters_per_class"] = st.slider(
-        "Clusters per Class",
-        min_value=1,
-        max_value=2,
-        value=1,
-        key=cluster_key,
-        help=(
-            "Bounded by the selected class count because this method uses exactly "
-            "two generated features."
-        ),
-        disabled=cluster_disabled
-    )
+    max_clusters_per_class = 4 // n_classes
+
+    if max_clusters_per_class == 1:
+        st.slider(
+            "Clusters per Class",
+            min_value=1,
+            max_value=2,
+            value=1,
+            key=f"{cluster_key}_locked_{n_classes}",
+            disabled=True,
+            help="Locked to 1 because n_classes * n_clusters_per_class must be <= 4.",
+        )
+        params["n_clusters_per_class"] = 1
+    else:
+        params["n_clusters_per_class"] = st.slider(
+            "Clusters per Class",
+            min_value=1,
+            max_value=max_clusters_per_class,
+            value=1,
+            key=cluster_key,
+            help="Bounded because this method uses exactly two generated features.",
+        )
     return params
 
 
