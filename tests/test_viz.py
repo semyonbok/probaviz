@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
+from sklearn.metrics import log_loss
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC, SVC
@@ -430,6 +431,69 @@ def test_plot_with_model_without_predict_proba_raises(binary_dataset):
 
     with pytest.raises(AttributeError, match="predict_proba"):
         viz.plot(contour_on=True)
+
+
+def test_get_classification_metrics_without_predict_proba(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=LinearSVC(), data=data, target=target, features=[0, 1])
+
+    metrics = viz.get_classification_metrics("test")
+
+    class_df = metrics["class_specific_df"]
+    aggregate_df = metrics["aggregate_df"]
+    assert list(class_df.columns) == ["class", "support", "precision", "recall", "f1_score"]
+    assert list(aggregate_df.columns) == [
+        "aggregate",
+        "support",
+        "precision",
+        "recall",
+        "f1_score",
+    ]
+    assert aggregate_df["aggregate"].tolist() == ["micro", "macro", "weighted"]
+
+
+def test_get_classification_metrics_with_predict_proba(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    metrics = viz.get_classification_metrics("test")
+
+    class_df = metrics["class_specific_df"]
+    aggregate_df = metrics["aggregate_df"]
+    assert {"log_loss_ovr", "brier_score_ovr"}.issubset(class_df.columns)
+    assert {"log_loss", "brier_score"}.issubset(aggregate_df.columns)
+    assert aggregate_df["log_loss"].notna().all()
+    assert aggregate_df["brier_score"].notna().all()
+    assert aggregate_df.loc[aggregate_df["aggregate"] == "micro", "brier_score"].iloc[0] >= 0
+
+
+def test_get_classification_metrics_aggregate_log_loss_averages(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    metrics = viz.get_classification_metrics("test")
+    aggregate_df = metrics["aggregate_df"].set_index("aggregate")
+    y_score = viz._test_predict_proba
+    y_true = viz._test_target
+    support = metrics["class_specific_df"]["support"].to_numpy()
+
+    probability_floor = np.finfo(y_score.dtype).eps
+    class_log_loss = np.asarray(
+        [
+            -np.mean(np.log(np.clip(y_score[y_true == current_class, index], probability_floor, 1.0)))
+            for index, current_class in enumerate(viz.classes)
+        ]
+    )
+
+    expected_log_loss = [
+        log_loss(y_true, y_score, labels=list(viz.classes)),
+        np.mean(class_log_loss),
+        np.average(class_log_loss, weights=support),
+    ]
+    np.testing.assert_allclose(
+        aggregate_df.loc[["micro", "macro", "weighted"], "log_loss"],
+        expected_log_loss,
+    )
 
 
 def test_fit_without_model_raises_model_required(binary_dataset):

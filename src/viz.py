@@ -41,7 +41,7 @@ MSG_INVALID_SPLIT_RANDOM_STATE = "split_random_state must be a non-negative inte
 
 CMAP_COLORS = ["Blues", "Oranges", "Greens", "Reds", "Purples", "Greys"]
 MARKER_COLORS = [
-    "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:grey"
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#7f7f7f"
 ]
 MARKER_STYLES = ["o", "s", "P", "v", "D", "X"]
 
@@ -1127,21 +1127,30 @@ class ProbaViz:
         Formulas:
         - Class-wise precision/recall/F1/support come from
           ``precision_recall_fscore_support(y_true, y_pred, labels=self.classes, average=None)``.
-        - Class-wise one-vs-rest log loss for class ``k`` is
+        - If the model supports ``predict_proba``, class-wise one-vs-rest
+          log loss for class ``k`` is
           ``log_loss(1[y=k], p_k)``, where ``p_k`` is the predicted probability
           for class ``k`` and ``1[y=k]`` is the binary indicator target.
-        - Class-wise one-vs-rest Brier score for class ``k`` is
+        - If the model supports ``predict_proba``, class-wise one-vs-rest
+          Brier score for class ``k`` is
           ``mean((p_k - 1[y=k])**2)``.
-        - Aggregate ``log_loss`` is the multiclass cross-entropy
-          ``log_loss(y_true, y_score, labels=self.classes)``.
-        - Aggregate ``brier_score`` values are one-vs-rest summaries:
+        - If the model supports ``predict_proba``, aggregate ``log_loss``
+          values summarize true-class negative log probabilities: ``micro`` is
+          the standard multiclass cross-entropy over all samples, ``macro`` is
+          the unweighted mean of per-class true-class losses, and ``weighted``
+          is the support-weighted mean of per-class true-class losses.
+        - If the model supports ``predict_proba``, aggregate ``brier_score``
+          values are one-vs-rest summaries:
           ``micro`` is computed on flattened one-vs-rest targets/scores,
           ``macro`` is the unweighted mean of class-wise OVR Brier scores,
           and ``weighted`` is the support-weighted mean of class-wise OVR Brier
           scores.
         """
-        self._ensure_fitted_for_plot(require_predict_proba=True)
-        y_true, y_score = self._get_split_targets_and_scores(data_split)
+        if data_split not in {"train", "test"}:
+            raise ValueError("data_split must be either 'train' or 'test'")
+
+        self._ensure_fitted_for_plot(require_predict_proba=False)
+        y_true = self._train_target if data_split == "train" else self._test_target
         y_pred = (
             self._get_train_predictions()
             if data_split == "train"
@@ -1151,23 +1160,14 @@ class ProbaViz:
         precision, recall, f1_values, support = precision_recall_fscore_support(
             y_true, y_pred, labels=self.classes, average=None, zero_division=0
         )
-        y_true_bin = self._binarize_targets(y_true)
-
-        class_log_loss_ovr: list[float] = []
-        class_brier_ovr: list[float] = []
-        for index, _ in enumerate(self.classes):
-            class_log_loss_ovr.append(log_loss(y_true_bin[:, index], y_score[:, index]))
-            class_brier_ovr.append(brier_score_loss(y_true_bin[:, index], y_score[:, index]))
 
         class_specific_df = pd.DataFrame(
             {
                 "class": self.classes,
+                "support": support.astype(int),
                 "precision": precision,
                 "recall": recall,
                 "f1_score": f1_values,
-                "log_loss_ovr": class_log_loss_ovr,
-                "brier_score_ovr": class_brier_ovr,
-                "support": support.astype(int),
             }
         )
 
@@ -1182,27 +1182,59 @@ class ProbaViz:
         )
 
         total_support = int(np.sum(support))
-        class_brier_arr = np.asarray(class_brier_ovr, dtype=float)
-        class_support_arr = support.astype(float)
-        weighted_brier = (
-            float(np.average(class_brier_arr, weights=class_support_arr))
-            if total_support > 0
-            else float("nan")
-        )
-        aggregate_log_loss = float(log_loss(y_true, y_score, labels=list(self.classes)))
-        micro_brier = float(brier_score_loss(y_true_bin.ravel(), y_score.ravel()))
-        macro_brier = float(np.mean(class_brier_arr))
-
         aggregate_df = pd.DataFrame(
             {
                 "aggregate": ["micro", "macro", "weighted"],
+                "support": [total_support, total_support, total_support],
                 "precision": [micro_precision, macro_precision, weighted_precision],
                 "recall": [micro_recall, macro_recall, weighted_recall],
                 "f1_score": [micro_f1, macro_f1, weighted_f1],
-                "log_loss": [aggregate_log_loss, aggregate_log_loss, aggregate_log_loss],
-                "brier_score": [micro_brier, macro_brier, weighted_brier],
-                "support": [total_support, total_support, total_support],
             }
         )
+        if hasattr(self._model, "predict_proba"):
+            y_true_bin = self._binarize_targets(y_true)
+            y_score = (
+                self._get_train_predict_proba()
+                if data_split == "train"
+                else self._get_test_predict_proba()
+            )
+            class_log_loss_ovr: list[float] = []
+            class_brier_ovr: list[float] = []
+            for index, _ in enumerate(self.classes):
+                class_log_loss_ovr.append(log_loss(y_true_bin[:, index], y_score[:, index]))
+                class_brier_ovr.append(brier_score_loss(y_true_bin[:, index], y_score[:, index]))
+
+            class_specific_df["log_loss_ovr"] = class_log_loss_ovr
+            class_specific_df["brier_score_ovr"] = class_brier_ovr
+
+            class_brier_arr = np.asarray(class_brier_ovr, dtype=float)
+            class_log_loss_values: list[float] = []
+            probability_floor = np.finfo(y_score.dtype).eps
+            for index, current_class in enumerate(self.classes):
+                class_mask = y_true == current_class
+                class_probabilities = np.clip(
+                    y_score[class_mask, index], probability_floor, 1.0
+                )
+                class_log_loss_values.append(float(-np.mean(np.log(class_probabilities))))
+            class_log_loss_arr = np.asarray(class_log_loss_values, dtype=float)
+
+            class_support_arr = support.astype(float)
+            weighted_log_loss = (
+                float(np.average(class_log_loss_arr, weights=class_support_arr))
+                if total_support > 0
+                else float("nan")
+            )
+            weighted_brier = (
+                float(np.average(class_brier_arr, weights=class_support_arr))
+                if total_support > 0
+                else float("nan")
+            )
+            micro_log_loss = float(log_loss(y_true, y_score, labels=list(self.classes)))
+            macro_log_loss = float(np.mean(class_log_loss_arr))
+            micro_brier = float(brier_score_loss(y_true_bin.ravel(), y_score.ravel()))
+            macro_brier = float(np.mean(class_brier_arr))
+
+            aggregate_df["log_loss"] = [micro_log_loss, macro_log_loss, weighted_log_loss]
+            aggregate_df["brier_score"] = [micro_brier, macro_brier, weighted_brier]
 
         return {"class_specific_df": class_specific_df, "aggregate_df": aggregate_df}

@@ -5,7 +5,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from sklearn.datasets import load_iris, load_wine, load_breast_cancer
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.preprocessing import (
     MaxAbsScaler,
     MinMaxScaler,
@@ -23,7 +22,7 @@ from src.synthetic import (
     get_synthetic_labels,
     get_synthetic_spec,
 )
-from src.viz import ProbaViz
+from src.viz import MARKER_COLORS, ProbaViz
 from src.widgets import SYNTH_WIDGETS, none_or_widget
 from src.models import MODELS
 from src.parsers import parse_model_desc, parse_param_desc, format_sig_md
@@ -213,64 +212,52 @@ def plot_prs(tab_pr):
         )
 
 
+def _class_color_styles(classes):
+    styles = {}
+    for index, class_name in enumerate(classes):
+        color = MARKER_COLORS[index % len(MARKER_COLORS)]
+        styles[class_name] = (
+            f"background-color: {color}; color: #ffffff; font-weight: 600"
+        )
+    return styles
+
+
+def _style_class_column(class_specific_df, class_styles):
+    return class_specific_df.style.apply(
+        lambda values: [class_styles.get(value, "") for value in values],
+        subset=["class"],
+    )
+
+
 def plot_metrics(tab_metrics):
-    def _build_metrics_tables(data_split: str):
-        pv = st.session_state["pv"]
-        if data_split == "train":
-            y_true = pv._train_target
-            y_pred = pv._train_predictions if pv._train_predictions is not None else pv.model.predict(pv._train_xy)
-        else:
-            y_true = pv._test_target
-            y_pred = pv._test_predictions if pv._test_predictions is not None else pv.model.predict(pv._test_xy)
-
-        classes = pv.classes
-        class_precision, class_recall, class_f1, class_support = precision_recall_fscore_support(
-            y_true,
-            y_pred,
-            labels=classes,
-            average=None,
-            zero_division=0,
+    class_styles = _class_color_styles(st.session_state["pv"].classes)
+    metrics = ["precision", "recall", "f1_score", "brier_score_ovr", "brier_score"]
+    column_config = {
+        m: st.column_config.ProgressColumn(
+            m, min_value=0, max_value=1, width="small"
         )
-        class_metrics_df = pd.DataFrame(
-            {
-                "Precision": class_precision,
-                "Recall": class_recall,
-                "F1-Score": class_f1,
-                "Support": class_support.astype(int),
-            },
-            index=classes,
-        ).round(3)
-        class_metrics_df.index.name = "Class"
-
-        macro_precision, macro_recall, macro_f1, _ = precision_recall_fscore_support(
-            y_true, y_pred, average="macro", zero_division=0
-        )
-        weighted_precision, weighted_recall, weighted_f1, _ = precision_recall_fscore_support(
-            y_true, y_pred, average="weighted", zero_division=0
-        )
-        aggregate_metrics_df = pd.DataFrame(
-            {
-                "Precision": [None, macro_precision, weighted_precision],
-                "Recall": [None, macro_recall, weighted_recall],
-                "F1-Score": [accuracy_score(y_true, y_pred), macro_f1, weighted_f1],
-                "Support": [len(y_true), len(y_true), len(y_true)],
-            },
-            index=["Accuracy", "Macro Avg", "Weighted Avg"],
-        ).round(3)
-        aggregate_metrics_df.index.name = "Metric"
-        return class_metrics_df, aggregate_metrics_df
-
+        for m in metrics
+    }
+    column_config["log_loss_ovr"] = st.column_config.NumberColumn(
+        "log_loss_ovr", format="%.4f", width="small"
+    )
+    column_config["log_loss"] = st.column_config.NumberColumn(
+        "log_loss", format="%.4f", width="small"
+    )
     train_col, test_col = tab_metrics.columns(2, gap="medium")
     for col, subset_name, split in [
         (train_col, "Train Subset", "train"),
         (test_col, "Test Subset", "test"),
     ]:
         col.subheader(subset_name)
-        class_metrics_df, aggregate_metrics_df = _build_metrics_tables(split)
+        metrics_df = st.session_state["pv"].get_classification_metrics(split)
+        class_specific_df = _style_class_column(
+            metrics_df["class_specific_df"], class_styles
+        )
         col.markdown("**Class-specific metrics table**")
-        col.dataframe(class_metrics_df, use_container_width=True)
+        col.dataframe(class_specific_df, width="stretch", column_config=column_config)
         col.markdown("**Aggregate metrics table**")
-        col.dataframe(aggregate_metrics_df, use_container_width=True)
+        col.dataframe(metrics_df["aggregate_df"], width="stretch", column_config=column_config)
 
 
 # main display space
@@ -496,7 +483,7 @@ else:
             "This view requires `predict_proba` support."
         )
         tab_pr.error(
-            "❌ **Precision-recall curves are unavailable for this model configuration.** "
+            "❌ **PR curves are unavailable for this model configuration.** "
             "This view requires `predict_proba` support."
         )
         plot_metrics(tab_metrics)
