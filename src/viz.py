@@ -21,7 +21,10 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
     auc,
     average_precision_score,
+    brier_score_loss,
     f1_score,
+    log_loss,
+    precision_recall_fscore_support,
     precision_recall_curve,
     roc_curve,
 )
@@ -1114,3 +1117,92 @@ class ProbaViz:
         if return_fig:
             return fig
         return None
+
+    def get_classification_metrics(
+        self, data_split: Literal["train", "test"] = "train"
+    ) -> dict[str, pd.DataFrame]:
+        """
+        Compute split-specific classification metrics with class-wise and aggregate summaries.
+
+        Formulas:
+        - Class-wise precision/recall/F1/support come from
+          ``precision_recall_fscore_support(y_true, y_pred, labels=self.classes, average=None)``.
+        - Class-wise one-vs-rest log loss for class ``k`` is
+          ``log_loss(1[y=k], p_k)``, where ``p_k`` is the predicted probability
+          for class ``k`` and ``1[y=k]`` is the binary indicator target.
+        - Class-wise one-vs-rest Brier score for class ``k`` is
+          ``mean((p_k - 1[y=k])**2)``.
+        - Aggregate ``log_loss`` is the multiclass cross-entropy
+          ``log_loss(y_true, y_score, labels=self.classes)``.
+        - Aggregate ``brier_score`` values are one-vs-rest summaries:
+          ``micro`` is computed on flattened one-vs-rest targets/scores,
+          ``macro`` is the unweighted mean of class-wise OVR Brier scores,
+          and ``weighted`` is the support-weighted mean of class-wise OVR Brier
+          scores.
+        """
+        self._ensure_fitted_for_plot(require_predict_proba=True)
+        y_true, y_score = self._get_split_targets_and_scores(data_split)
+        y_pred = (
+            self._get_train_predictions()
+            if data_split == "train"
+            else self._get_test_predictions()
+        )
+
+        precision, recall, f1_values, support = precision_recall_fscore_support(
+            y_true, y_pred, labels=self.classes, average=None, zero_division=0
+        )
+        y_true_bin = self._binarize_targets(y_true)
+
+        class_log_loss_ovr: list[float] = []
+        class_brier_ovr: list[float] = []
+        for index, _ in enumerate(self.classes):
+            class_log_loss_ovr.append(log_loss(y_true_bin[:, index], y_score[:, index]))
+            class_brier_ovr.append(brier_score_loss(y_true_bin[:, index], y_score[:, index]))
+
+        class_specific_df = pd.DataFrame(
+            {
+                "class": self.classes,
+                "precision": precision,
+                "recall": recall,
+                "f1_score": f1_values,
+                "log_loss_ovr": class_log_loss_ovr,
+                "brier_score_ovr": class_brier_ovr,
+                "support": support.astype(int),
+            }
+        )
+
+        micro_precision, micro_recall, micro_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="micro", zero_division=0
+        )
+        macro_precision, macro_recall, macro_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="macro", zero_division=0
+        )
+        weighted_precision, weighted_recall, weighted_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="weighted", zero_division=0
+        )
+
+        total_support = int(np.sum(support))
+        class_brier_arr = np.asarray(class_brier_ovr, dtype=float)
+        class_support_arr = support.astype(float)
+        weighted_brier = (
+            float(np.average(class_brier_arr, weights=class_support_arr))
+            if total_support > 0
+            else float("nan")
+        )
+        aggregate_log_loss = float(log_loss(y_true, y_score, labels=list(self.classes)))
+        micro_brier = float(brier_score_loss(y_true_bin.ravel(), y_score.ravel()))
+        macro_brier = float(np.mean(class_brier_arr))
+
+        aggregate_df = pd.DataFrame(
+            {
+                "aggregate": ["micro", "macro", "weighted"],
+                "precision": [micro_precision, macro_precision, weighted_precision],
+                "recall": [micro_recall, macro_recall, weighted_recall],
+                "f1_score": [micro_f1, macro_f1, weighted_f1],
+                "log_loss": [aggregate_log_loss, aggregate_log_loss, aggregate_log_loss],
+                "brier_score": [micro_brier, macro_brier, weighted_brier],
+                "support": [total_support, total_support, total_support],
+            }
+        )
+
+        return {"class_specific_df": class_specific_df, "aggregate_df": aggregate_df}
