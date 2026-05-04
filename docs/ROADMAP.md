@@ -30,9 +30,12 @@
 - [X] Train/test data split
 
 ### 📈 Metrics & Evaluation
-- [ ] ⭐ Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
 - [ ] Calibration display for binary classification
 - [ ] Learning curve
+- [ ] Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
+  - [X] Define the main layout, esthetics and add support key metrics
+  - [ ] Add accuracy 
+  - [ ] Add minimal help annotations with hyperlinks pointing to docs
 - [X] ROC curves
 - [X] Precision–Recall curves
 - [X] Modify confusion/error matrix visualization
