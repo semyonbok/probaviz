@@ -10,8 +10,8 @@ dependencies:
   - matplotlib
   - protobuf
   - streamlit
+  - groq
   - pytest
   - jupyterlab
   - ipywidgets
   - plotly
-

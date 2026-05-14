@@ -5,3 +5,4 @@ notebooks/
 tools/
 cspell.json
 .codex
+.streamlit
