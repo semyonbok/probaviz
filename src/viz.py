@@ -1113,7 +1113,7 @@ class ProbaViz:
             else:
                 raise ValueError("mode must be either 'micro_macro' or 'class'")
 
-            legend = axes.legend(loc="lower right", frameon=True, framealpha=.5)
+            legend = axes.legend(loc="lower left", frameon=True, framealpha=.5)
             legend.get_frame().set_edgecolor('none')
 
         if return_fig:

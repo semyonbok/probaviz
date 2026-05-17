@@ -1,0 +1,49 @@
+<svg width="512" height="512"
+     viewBox="0 0 512 512"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background: Matplotlib Greens(0.94) -->
+  <rect width="512" height="512"
+        rx="96"
+        fill="#005723"/>
+
+  <!-- Robot head: enlarged, no ears -->
+  <rect x="54" y="104"
+        width="404" height="318"
+        rx="104"
+        fill="#FFFFFF"
+        stroke="#005723"
+        stroke-width="18"/>
+
+  <!-- Antenna -->
+  <circle cx="256" cy="68"
+          r="34"
+          fill="#FFFFFF"/>
+
+  <rect x="238" y="86"
+        width="36" height="44"
+        fill="#FFFFFF"/>
+
+  <!-- Left Eye: Matplotlib Blues -->
+  <circle cx="176" cy="248"
+          r="62"
+          fill="#bdd7ec"/>
+
+  <circle cx="176" cy="248"
+          r="31"
+          fill="#1b69af"/>
+
+  <!-- Right Eye: solid square, Matplotlib Oranges(0.72) -->
+  <rect x="292" y="204"
+        width="88" height="88"
+        rx="0"
+        fill="#de5005"/>
+
+  <!-- Mouth -->
+  <path d="M 198 338 Q 256 382 314 338"
+        fill="none"
+        stroke="#005723"
+        stroke-width="18"
+        stroke-linecap="round"/>
+
+</svg>

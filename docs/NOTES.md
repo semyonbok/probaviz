@@ -10,6 +10,34 @@
 - `train_size` is configurable via constructor, `set_dataset(...)`, and the `train_size` property; `None` delegates to sklearn defaults.
 - Splitting is strictly stratified; impossible class/sample configurations raise a targeted error rather than silently falling back.
 
+## ProbaCoach Feature (Pre-planning)
+**Main idea:** supply llm with a payload on current app state and get a response with a few actionable tips, things to try, encouragement and maybe even a joke.
+### Overall Design
+- cycle through models if allowance on one is exceeded
+- lean on input token caching: https://console.groq.com/docs/prompt-caching
+- limit max output token to 512
+- always just 2 messages in chat completion: instructions from system and payload from user
+- payload should include:
+    - minimal info on dataset and pre-processing selected
+    - info on model: exploit `load_cached_model_docs` from `model_docs_cache.py` to get model and hyper-param descriptions + `get_params()` to get current hyperparams values
+    - metrics: exploit `ProbaViz` method: `get_classification_metrics` for both train and test subsets
+- UI
+    - Press button -> get chat response from assistant in `st.chat_message`
+    - indicate what model was used and number of toggles left
+    - optionally, indicate (some of) remaining allowances
+    - place coach at the bottom of the main space
+### Devs
+- analyze token use for all 26 models
+- try passing invalid API key
+### Safeguards
+- limit number of coach toggles per session
+- warning about genai output
+- ensure easy revert
+### Production
+- start with a  free tier of groq
+- crete a separate API key and manage as a streamlit secret
+- update env: add groq, add API key as a secret
+
 ## Decisions 
 
 ### Exclude `LogisticRegressionCV`

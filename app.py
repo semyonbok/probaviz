@@ -27,6 +27,14 @@ from src.widgets import SYNTH_WIDGETS, none_or_widget
 from src.models import MODELS
 from src.parsers import parse_model_desc, parse_param_desc, format_sig_md
 from src.model_docs_cache import get_cached_model_docs, load_model_docs_cache
+from src.genai_coach import (
+    build_coach_payload,
+    build_coach_system_prompt,
+    payload_to_message,
+    request_genai_coach,
+)
+
+MAX_COACH_CLICKS = 10
 
 
 # streamlit data processing functions
@@ -229,14 +237,20 @@ def _style_class_column(class_specific_df, class_styles):
     )
 
 
+def get_cached_classification_metrics(split):
+    metrics_cache = st.session_state.setdefault("classification_metrics_cache", {})
+    if split not in metrics_cache:
+        metrics_cache[split] = st.session_state["pv"].get_classification_metrics(split)
+    return metrics_cache[split]
+
+
 def plot_metrics(tab_metrics):
     class_styles = _class_color_styles(st.session_state["pv"].classes)
-    metrics = ["precision", "recall", "f1_score", "brier_score_ovr", "brier_score"]
     column_config = {
         m: st.column_config.ProgressColumn(
             m, min_value=0, max_value=1, width="small"
         )
-        for m in metrics
+        for m in ["precision", "recall", "f1_score", "brier_score_ovr", "brier_score"]
     }
     column_config["log_loss_ovr"] = st.column_config.NumberColumn(
         "log_loss_ovr", format="%.4f", width="small"
@@ -250,14 +264,121 @@ def plot_metrics(tab_metrics):
         (test_col, "Test Subset", "test"),
     ]:
         col.subheader(subset_name)
-        metrics_df = st.session_state["pv"].get_classification_metrics(split)
+        metrics = get_cached_classification_metrics(split)
         class_specific_df = _style_class_column(
-            metrics_df["class_specific_df"], class_styles
+            metrics["class_specific_df"], class_styles
         )
         col.markdown("**Class-specific metrics table**")
         col.dataframe(class_specific_df, width="stretch", column_config=column_config)
         col.markdown("**Aggregate metrics table**")
-        col.dataframe(metrics_df["aggregate_df"], width="stretch", column_config=column_config)
+        col.dataframe(metrics["aggregate_df"], width="stretch", column_config=column_config)
+
+
+def prepare_genai_coach_context(
+    *,
+    dataset_kind,
+    dataset_name,
+    preprocessing,
+    model_key,
+    active_model,
+    model_desc,  # deliberately unused
+    hp_desc,  # deliberately unused
+    selected_features,
+    train_size,
+    split_random_state,
+    synthetic_params,
+):
+    train_metrics = get_cached_classification_metrics("train")
+    test_metrics = get_cached_classification_metrics("test")
+    payload = build_coach_payload(
+        dataset_kind=dataset_kind,
+        dataset_name=dataset_name,
+        preprocessing=preprocessing,
+        model_key=model_key,
+        model_params=active_model.get_params(),
+        train_metrics=train_metrics,
+        test_metrics=test_metrics,
+        selected_features=selected_features,
+        train_size=train_size,
+        split_random_state=split_random_state,
+        target_classes=st.session_state["pv"].classes,
+        data_shape=st.session_state["pv"].data.shape,
+        synthetic_params=synthetic_params,
+    )
+    system_prompt = build_coach_system_prompt()  # deliberately without kwargs
+    coach_key = sha256(
+        (system_prompt + payload_to_message(payload)).encode("utf-8")
+    ).hexdigest()
+    st.session_state["genai_coach_context"] = {
+        "coach_key": coach_key,
+        "system_prompt": system_prompt,
+        "payload": payload,
+        "model_key": model_key,
+    }
+
+
+@st.fragment()
+def render_genai_coach():
+    api_key = st.secrets.get("GROQ_API_KEY")
+    has_response = st.session_state.get("genai_coach_response") is not None
+    click_count = st.session_state.get("genai_coach_click_count", 0)
+    remaining_clicks = max(MAX_COACH_CLICKS - click_count, 0)
+    with st.expander("ProbaCoach", expanded=has_response, icon="🤖"):
+        context = st.session_state.get("genai_coach_context")
+        if not context:
+            st.info("Fit a model to enable ProbaCoach.")
+            return
+        if not api_key:
+            st.info("Set `GROQ_API_KEY` in the environment to enable ProbaCoach.")
+            return
+
+        if remaining_clicks == 0:
+            st.warning("Coach click limit reached for this session.")
+
+        coach_key = context["coach_key"]
+        if st.button(
+            f"Nudge ({remaining_clicks} left)",
+            type="primary",
+            width="stretch",
+            key=f"coach_button_{coach_key}",
+            disabled=(remaining_clicks == 0),
+        ):
+            current_click_count = st.session_state.get("genai_coach_click_count", 0)
+            if current_click_count >= MAX_COACH_CLICKS:
+                st.warning("Coach click limit reached for this session.")
+            else:
+                st.session_state["genai_coach_click_count"] = current_click_count + 1
+                with st.spinner("Nudging ProbaCoach..."):
+                    st.session_state["genai_coach_response"] = request_genai_coach(
+                        api_key=api_key,
+                        system_prompt=context["system_prompt"],
+                        payload=context["payload"],
+                    )
+                    st.session_state["genai_coach_key"] = coach_key
+                st.rerun(scope="fragment")
+
+        response = st.session_state.get("genai_coach_response")
+        if response is None:
+            return
+        if st.session_state.get("genai_coach_key") != coach_key:
+            st.info("This saved coach response is for a previous app state. Press Ask coach to refresh it.")
+
+        if response.rate_limited_models:
+            st.warning(
+                "Allowance exceeded for: " + ", ".join(response.rate_limited_models)
+            )
+        if response.allowance_exceeded:
+            st.error("All configured Groq model allowances are currently exceeded.")
+            return
+        if response.error:
+            st.error(f"ProbaCoach request failed: {response.error}")
+            return
+
+        with st.chat_message("assistant", avatar=Path(__file__).resolve().parent / "docs" / "pics" / "ProbaCoach.svg"):
+            st.markdown(response.content)
+        if response.model:
+            caption = f"Probably right; definitely AI-generated · Model: `{response.model}`"
+            st.caption(caption)
 
 
 # main display space
@@ -276,6 +397,7 @@ train_size = None
 split_random_state = None
 data_config = None
 synth_summary: str | None = None
+synthetic_params = None
 
 # side bar controls: data, model, and hyperparameters
 with st.sidebar:
@@ -319,6 +441,7 @@ with st.sidebar:
             st.caption(synth_spec.help_text)
             with st.container(border=True):
                 synth_params = SYNTH_WIDGETS[synth_name](synth_spec)
+            synthetic_params = synth_params
             synth_config_json = json.dumps(synth_params, sort_keys=True)
             data, target = process_synth(synth_name, synth_config_json)
             target_bytes = json.dumps(
@@ -386,6 +509,7 @@ with st.sidebar:
         if cached_docs is not None:
             model_desc, hp_desc = cached_docs
         else:
+            model_desc = parse_model_desc(model)
             hp_desc = parse_param_desc(model)
         if "random_state" in model.get_params().keys():
             hp["random_state"] = none_or_widget(
@@ -442,9 +566,27 @@ if model is None:
     )
 else:
     active_model = build_model_pipeline(model, scaling)
+    genai_coach_ready = False
+
+    def _prepare_active_genai_coach_context():
+        prepare_genai_coach_context(
+            dataset_kind=dataset,
+            dataset_name=display_set_name,
+            preprocessing=scaling,
+            model_key=model_pick,
+            active_model=active_model,
+            model_desc=model_desc,
+            hp_desc=hp_desc,
+            selected_features=st.session_state["pv"].features,
+            train_size=train_size,
+            split_random_state=split_random_state,
+            synthetic_params=synthetic_params,
+        )
+
     try:
         st.session_state["pv"].model = active_model
         st.session_state["pv"].update_params(**prefix_model_params(hp, scaling))
+        st.session_state["classification_metrics_cache"] = {}
 
         tab_contour, tab_conf, tab_err, tab_roc, tab_pr, tab_metrics = st.tabs(
             [
@@ -471,6 +613,8 @@ else:
         plot_rocs(tab_roc)
         plot_prs(tab_pr)
         plot_metrics(tab_metrics)
+        _prepare_active_genai_coach_context()
+        genai_coach_ready = True
     except AttributeError:
         tab_contour.error(
             "❌ **This model configuration cannot predict probability scores.** "
@@ -487,6 +631,8 @@ else:
             "This view requires `predict_proba` support."
         )
         plot_metrics(tab_metrics)
+        _prepare_active_genai_coach_context()
+        genai_coach_ready = True
     except (ValueError, NotImplementedError) as e:
         st.error(f"❌ **Model failed to fit.** {e}")
     finally:
@@ -497,3 +643,5 @@ else:
                     st.info(model_sig + model_desc)
                 else:
                     st.info(model_sig + parse_model_desc(model))
+        if genai_coach_ready:
+            render_genai_coach()

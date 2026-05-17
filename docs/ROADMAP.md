@@ -138,8 +138,8 @@
 - [X] Allow for optional selection of `random_state`
 - [X] Skip probability surface plotting for `SGDClassifier` and SVMs if model configs have no `predict_proba` method, allowing to explore other tabs.
 
-### 🧠 GenAI Component
-- [ ] ⭐ LLM component reacting to user's most recent change (explain what changed / why)
+### 🧠 ProbaCoach Component
+- [X] LLM component reacting to state of the app
 
 ### 🧹 Code Quality & Refactoring
 - [ ] Add/update docstrings in viz.py
