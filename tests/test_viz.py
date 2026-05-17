@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 
@@ -9,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.datasets import load_iris
-from sklearn.metrics import log_loss
+from sklearn.metrics import accuracy_score, log_loss
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC, SVC
@@ -441,10 +442,18 @@ def test_get_classification_metrics_without_predict_proba(binary_dataset):
 
     class_df = metrics["class_specific_df"]
     aggregate_df = metrics["aggregate_df"]
-    assert list(class_df.columns) == ["class", "support", "precision", "recall", "f1_score"]
+    assert list(class_df.columns) == [
+        "class",
+        "support",
+        "accuracy",
+        "precision",
+        "recall",
+        "f1_score",
+    ]
     assert list(aggregate_df.columns) == [
         "aggregate",
         "support",
+        "accuracy",
         "precision",
         "recall",
         "f1_score",
@@ -465,6 +474,37 @@ def test_get_classification_metrics_with_predict_proba(binary_dataset):
     assert aggregate_df["log_loss"].notna().all()
     assert aggregate_df["brier_score"].notna().all()
     assert aggregate_df.loc[aggregate_df["aggregate"] == "micro", "brier_score"].iloc[0] >= 0
+
+
+def test_get_classification_metrics_aggregate_accuracy_averages(binary_dataset):
+    data, target = binary_dataset
+    viz = ProbaViz(model=CountingSVC(), data=data, target=target, features=[0, 1])
+
+    metrics = viz.get_classification_metrics("test")
+    aggregate_df = metrics["aggregate_df"].set_index("aggregate")
+    y_true = viz._test_target
+    y_pred = viz._test_predictions
+    class_df = metrics["class_specific_df"]
+    support = class_df["support"].to_numpy()
+
+    class_accuracy = np.asarray(
+        [
+            accuracy_score(y_true == current_class, y_pred == current_class)
+            for current_class in viz.classes
+        ],
+        dtype=float,
+    )
+
+    expected_accuracy = [
+        accuracy_score(y_true, y_pred),
+        np.mean(class_accuracy),
+        np.average(class_accuracy, weights=support),
+    ]
+    np.testing.assert_allclose(class_df["accuracy"], class_accuracy)
+    np.testing.assert_allclose(
+        aggregate_df.loc[["micro", "macro", "weighted"], "accuracy"],
+        expected_accuracy,
+    )
 
 
 def test_get_classification_metrics_aggregate_log_loss_averages(binary_dataset):
@@ -494,6 +534,15 @@ def test_get_classification_metrics_aggregate_log_loss_averages(binary_dataset):
         aggregate_df.loc[["micro", "macro", "weighted"], "log_loss"],
         expected_log_loss,
     )
+
+
+def test_classification_metrics_explainer_is_configured():
+    explainer_path = Path(__file__).resolve().parents[1] / "src" / "tab_explainers.json"
+    payload = json.loads(explainer_path.read_text())
+    explainer = payload["tabs"]["classification_metrics"]
+
+    assert explainer["title"] == "How to Read Classification Metrics"
+    assert "accuracy_score" in explainer["body_markdown"]
 
 
 def test_fit_without_model_raises_model_required(binary_dataset):

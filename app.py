@@ -245,12 +245,13 @@ def get_cached_classification_metrics(split):
 
 
 def plot_metrics(tab_metrics):
+    metrics_explainer = load_tab_explainers()["classification_metrics"]
     class_styles = _class_color_styles(st.session_state["pv"].classes)
     column_config = {
         m: st.column_config.ProgressColumn(
             m, min_value=0, max_value=1, width="small"
         )
-        for m in ["precision", "recall", "f1_score", "brier_score_ovr", "brier_score"]
+        for m in ["accuracy", "precision", "recall", "f1_score", "brier_score_ovr", "brier_score"]
     }
     column_config["log_loss_ovr"] = st.column_config.NumberColumn(
         "log_loss_ovr", format="%.4f", width="small"
@@ -272,6 +273,9 @@ def plot_metrics(tab_metrics):
         col.dataframe(class_specific_df, width="stretch", column_config=column_config)
         col.markdown("**Aggregate metrics table**")
         col.dataframe(metrics["aggregate_df"], width="stretch", column_config=column_config)
+
+    with tab_metrics.expander(metrics_explainer["title"], icon=metrics_explainer["icon"]):
+        st.info(metrics_explainer["body_markdown"])
 
 
 def prepare_genai_coach_context(

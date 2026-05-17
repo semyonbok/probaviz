@@ -19,6 +19,7 @@ from matplotlib.lines import Line2D
 from sklearn.base import is_classifier
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
+    accuracy_score,
     auc,
     average_precision_score,
     brier_score_loss,
@@ -1127,8 +1128,13 @@ class ProbaViz:
         Compute split-specific classification metrics with class-wise and aggregate summaries.
 
         Formulas:
+        - Class-wise accuracy is one-vs-rest accuracy:
+          ``accuracy_score(y_true == class_k, y_pred == class_k)``.
         - Class-wise precision/recall/F1/support come from
           ``precision_recall_fscore_support(y_true, y_pred, labels=self.classes, average=None)``.
+        - Aggregate accuracy uses standard multiclass accuracy for ``micro``,
+          and unweighted/support-weighted means of class-wise one-vs-rest
+          accuracy for ``macro`` and ``weighted``.
         - If the model supports ``predict_proba``, class-wise one-vs-rest
           log loss for class ``k`` is
           ``log_loss(1[y=k], p_k)``, where ``p_k`` is the predicted probability
@@ -1162,11 +1168,21 @@ class ProbaViz:
         precision, recall, f1_values, support = precision_recall_fscore_support(
             y_true, y_pred, labels=self.classes, average=None, zero_division=0
         )
+        class_accuracy = np.asarray(
+            [
+                accuracy_score(y_true == current_class, y_pred == current_class)
+                for current_class in self.classes
+            ],
+            dtype=float,
+        )
+        total_support = int(np.sum(support))
+        class_support_arr = support.astype(float)
 
         class_specific_df = pd.DataFrame(
             {
                 "class": self.classes,
                 "support": support.astype(int),
+                "accuracy": class_accuracy,
                 "precision": precision,
                 "recall": recall,
                 "f1_score": f1_values,
@@ -1183,11 +1199,18 @@ class ProbaViz:
             y_true, y_pred, average="weighted", zero_division=0
         )
 
-        total_support = int(np.sum(support))
+        micro_accuracy = accuracy_score(y_true, y_pred)
+        macro_accuracy = float(np.mean(class_accuracy))
+        weighted_accuracy = (
+            float(np.average(class_accuracy, weights=class_support_arr))
+            if total_support > 0
+            else float("nan")
+        )
         aggregate_df = pd.DataFrame(
             {
                 "aggregate": ["micro", "macro", "weighted"],
                 "support": [total_support, total_support, total_support],
+                "accuracy": [micro_accuracy, macro_accuracy, weighted_accuracy],
                 "precision": [micro_precision, macro_precision, weighted_precision],
                 "recall": [micro_recall, macro_recall, weighted_recall],
                 "f1_score": [micro_f1, macro_f1, weighted_f1],
@@ -1220,7 +1243,6 @@ class ProbaViz:
                 class_log_loss_values.append(float(-np.mean(np.log(class_probabilities))))
             class_log_loss_arr = np.asarray(class_log_loss_values, dtype=float)
 
-            class_support_arr = support.astype(float)
             weighted_log_loss = (
                 float(np.average(class_log_loss_arr, weights=class_support_arr))
                 if total_support > 0
