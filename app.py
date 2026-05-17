@@ -365,7 +365,7 @@ def render_genai_coach():
         if response is None:
             return
         if st.session_state.get("genai_coach_key") != coach_key:
-            st.info("This saved coach response is for a previous app state. Press Ask coach to refresh it.")
+            st.info("This saved ProbaCoach response is for a previous app state. Press **Nudge** to refresh it.")
 
         if response.rate_limited_models:
             st.warning(

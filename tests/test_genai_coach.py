@@ -84,6 +84,21 @@ def test_system_prompt_is_stable_for_same_model_docs():
     assert "Regularization" in prompt_1
 
 
+def test_system_prompt_constrains_advice_to_app_state():
+    prompt = build_coach_system_prompt()
+
+    assert prompt.startswith("Formatting re-enabled\n/no_think")
+    assert "JSON payload as the only source of truth" in prompt
+    assert "exactly two selected features" in prompt
+    assert "never suggest adding, removing, engineering, or selecting more features" in prompt
+    assert "only hyperparameters present in model.params" in prompt
+    assert "do not name missing tuning knobs" in prompt
+    assert "oversampling" in prompt
+    assert "cross-validation" in prompt
+    assert "interpretation caveats" in prompt
+    assert "1-3 actionable suggestions" in prompt
+
+
 class _RawResponse:
     def __init__(self, content: str):
         self._content = content
