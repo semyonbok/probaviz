@@ -9,16 +9,16 @@
 - [X] Update repo README file
 
 ### 🎓 Learning & Tools
-- [ ] Deep-dive into sklearn documentation:
+- [X] Deep-dive into sklearn documentation:
   - [X] Model Evaluation, Metrics & Scorers at [Skolar](https://skolar.probabl.ai/en/a/6004069601880409583;p=1,1006594772100055529;pa=0)
   - [X] Metrics and scoring: quantifying the quality of predictions at [User Guide](https://scikit-learn.org/stable/modules/model_evaluation.html)
   - [X] Multiclass Receiver Operating Characteristic (ROC) at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html)
   - [X] Precision-Recal at [Model Selection Examples](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html)
-  - [ ] `sklearn.inspection.DecisionBoundaryDisplay`
-- [ ] Re-read Streamlit documentation (best practices, deployment, genAI apps)
-- [ ] Re-read Groq Documentation
+  - [X] `sklearn.inspection.DecisionBoundaryDisplay`
+- [X] Re-read Streamlit documentation (best practices, deployment, genAI apps)
+- [X] Re-read Groq Documentation
 - [X] Familiarise with and try Codex
-  - [ ] Set up and run a Cloud env to implement a feature
+  - [X] Set up and run a Cloud env to implement a feature
   - [X] Try CLI
 - [ ] Agentic AI course
 - [ ] Check out Andrew's Ng Context Hub
@@ -32,10 +32,9 @@
 ### 📈 Metrics & Evaluation
 - [ ] Calibration display for binary classification
 - [ ] Learning curve
-- [ ] Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
+- [X] Dedicated tab with common classification metrics (perhaps leveraging `skore.EstimatorReport`)
   - [X] Define the main layout, esthetics and add support key metrics
-  - [ ] Add accuracy 
-  - [ ] Add minimal help annotations with hyperlinks pointing to docs
+  - [X] Add accuracy 
 - [X] ROC curves
 - [X] Precision–Recall curves
 - [X] Modify confusion/error matrix visualization
@@ -89,7 +88,7 @@
 - [ ] Colour picking for probability surfaces
 - [ ] Add emojis/icons to model selection widget
 - [ ] Add deprecated badge against affected hyper-parameters
-- [ ] Add dedicated model description definitions
+- [ ] Add dedicated model descriptions
 - [ ] Balloons when a 100% metric reached on a test subset
 - [ ] Improve model / parameter parsing
   - [ ] model info expander improvements
